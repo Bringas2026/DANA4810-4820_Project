@@ -26,7 +26,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ## 1. Introduction
 In today's world of analytics, professionals often need to use both Python and R to benefit the unique strengths of both languages. R excels in statistical models and graphics with ggplot2 or other libraries. Whereas python is known as the industry standard for general-purpose programming, big data and machine learning.
 
-Traditionally, our company has used R through RStudio. However, it is becoming important to use a platform which supports both Python and R Programs in one place. This manual provides thorough information on how to install and use Jupyter Notebook, how to run both Python and R codes within a single notebook file. This guide is applicable to both Windows and Mac users. It is written for beginners and is clear, simple to understand and assumes no previous knowledge of Python.
+Traditionally, our company has used R through RStudio. However, it is becoming important to use a platform which supports both Python and R Programs in one place. This manual provides thorough information on how to install and use Jupyter Notebook, how to run both Python and R codes within a single notebook file. This guide is applicable to both Windows and Mac users. It is written for beginners and is clear, simple to understand and assumes no previous knowledge of Python. 
+Even though RStudio is very effective when programming using R language, Jupyter Notebook supports Python and R programming languages at the same time; therefore, it is better suited for companies using both languages.
 
 ### What is Jupyter Notebook?
 Jupyter Notebook is an interactive computational environment that facilitates writing code, executing programs, presenting output, and annotating all these aspects within one single document. Being compatible with several programming languages such as Python and R, it becomes an excellent tool for data analysis tasks.
