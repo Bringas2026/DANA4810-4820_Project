@@ -1,5 +1,5 @@
 ---
-title: "DANA4810 Project - Part2"
+title: "DANA 4810 Project Part 2"
 output: html_document
 date: "2026-06-03"
 ---
@@ -8,18 +8,25 @@ date: "2026-06-03"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+**Course: DANA 4810**
+
+**Team members: Nandini Bhatia, Diego Alberto, Khushpreet Kaur, Haruka Sawakami**
+
+# Instruction Manual
 ## Github over Google docs for documenatiton
+
+## 1. Introduction
 Imagine you are delivering a final presentation for the company with your teammates, and everybody is using Google Docs or Word, sending emails back and forth after each change. It is the final day, and people rushing to finish on time are overwriting each other's work, with no way to know who changed what. In the end, you lose time, nerves, and the quality of the work suffers as well.
 
 GitHub solves these problems by giving every team member their own local copy of the files, tracking every change with a timestamp and author name, and allowing the team to merge contributions without overwriting each other's work.
 
-## Getting Started
+## 2. Getting Started
 
 We need to set up three thing before working on our documents:
 1.Install Git<br>
 2.Create a Github Account<br>
 3.Connect RStudio to Github<br>
-4.Setup Account Information<br>
+4.Setup Up Account Information & Credentials<br>
   To make sure that each team member's name shows up in Github after pushing, RStudio needs to be linked to appropriate Github account.
   How to do that:
   1.Set your Github Username
@@ -34,40 +41,68 @@ We need to set up three thing before working on our documents:
 
 ```
 
-## Basic Operation for Daily Use
+## 3. Basic Operation for Daily Use
 
 1.Open RStudio<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("31_OpenProject.png")
+```
+
 2.Select a Project<br>
-3.Pull a file that you would like to work on<br>
-4.Commit your change<br>
-5.Push to a Github<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("32_SelectProject.png")
+```
+
+3.Pull the latest files from GitHub<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("33_Pull.png")
+```
+
+4.Modify and Save files locally<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("34_Modify&Save.png")
+```
+
+5.Commit your changes with a clear comment<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("35_Commit.png")
+```
+
+6.Push your commits to Github<br>
+```{r, echo=FALSE, out.width="50%", fig.align="center"}
+knitr::include_graphics("36_Push.png")
+```
 
 ```{r}
 
 ```
 
-## Version Control
+## 4. Version Control
 
 1.How to make a version<br>
 2.How to check a history and differences<br>
-3.How to restore from a staging area<br>
-4.Hot to restore from a Github<br>
-5.How to communicate with team members<br>
+3.How to restore from a Local Changes (Before Commit) / staging area<br>
+4.How to restore from a Past Commit (Local)<br>
+5.Hot to restore from a Github<br>
+6.How to communicate with team members<br>
 
 ```{r}
 
 ```
 
-## Tips
+## 5. Tips
 
-1.Do's & Don'ts<br>
-2.Common Errors<br>
+1.Do's & Don'ts (Best Practices for Collaboration)<br>
+2.Common Errors & How to resolve Conflicts<br>
 
 ```{r}
 
 ```
+
+## References and Sources
+
 
 ## Document Update History
 
-DD June 2026,  New Creation<br>
+June 15 2026,  New Creation<br>
 
