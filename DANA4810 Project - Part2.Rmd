@@ -54,6 +54,24 @@ git config --global user.email "Your GitHub Email Address"
 
 ### 3. Basic Operation for Daily Use
 
+**As a Key Concept, there are three Git Environments: Local, Staging, and GitHub**<br>
+To collaborate effectively, it is essential to understand that Git manages your work across three separate stages, which is a major shift from the automatic, single-layer syncing of Google Docs:
+
+**1. Local Environment:**
+
+Your local machine where you open RStudio and edit code. Saving files here affects your local disk only, ensuring a safe sandbox where you can test or break code without impacting others.
+
+**2. Staging Area:**
+
+A critical intermediary stage. When you create a "Commit," the files currently in the Staging Area are recorded directly into your Local Repository (your PC's history log). It is crucial to note that committing does NOT send your changes to GitHub yet; your work remains strictly on your local machine until you "Push."
+
+**3. GitHub (Remote Repository):**
+
+The shared cloud infrastructure. Once your staged files are committed, hitting "Push" transfers those snapshots to GitHub, updating the team's official master copy.
+
+Note: The Purpose of Staging<br>
+The Staging Area acts as a filter. Instead of throwing all ongoing modifications into the cloud at once, it allows you to selectively package and comment on your changes step-by-step. This structural control is what gives Git its superior version tracking capabilities compared to traditional word processors.
+
 #### 3.1 Open RStudio
 ```{r, echo=FALSE, out.width="80%", fig.align="left"}
 knitr::include_graphics("31_OpenProject.png")
