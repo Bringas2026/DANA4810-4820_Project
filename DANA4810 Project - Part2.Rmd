@@ -1,8 +1,8 @@
 ---
 title: "DANA 4810 Project Part 2"
 output:
-  html_document: default
   word_document: default
+  html_document: default
 date: "2026-06-15"
 ---
 
@@ -285,9 +285,15 @@ git commit -m "Restore filename.Rmd to version from [date]"
 
 ```
 
+5. Push the commit so the rest of the team also sees the restored version — either run `git push`, or simply click the **"Push"** button in RStudio as in Section 3.6.<br>
+
+```{r, echo=FALSE, out.width="80%", fig.align="left"}
+knitr::include_graphics("36_Push.png")
+```
+
 #### 4.5 How to restore from a Github
 
-**Option A — Pull the latest version from GitHub (safest):**
+**- Pulling the latest version from GitHub (safest):**
 
 ```
 git pull origin main
