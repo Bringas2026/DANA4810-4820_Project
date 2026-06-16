@@ -1,6 +1,9 @@
 ---
 title: "DANA 4810 Project Part 2"
 output:
+  word_document:
+    toc: true
+    toc_depth: '3'
   html_document:
     toc: true
     toc_float: true
@@ -103,6 +106,7 @@ knitr::include_graphics("23_Repo.png")
 ```
 
 f. Confirm the workspace transition: RStudio will automatically refresh and open the new environment. Verify that the "Git" tab is now visible in your Environment pane.<br>
+
 ```{r, echo=FALSE, out.width="70%", fig.align="left"}
 knitr::include_graphics("23_NewProject.png")
 ```
@@ -110,7 +114,9 @@ knitr::include_graphics("23_NewProject.png")
 
 #### 2.4 Setup Up Account Information & Credentials<br>
 To make sure that each team member's name shows up in Github after pushing, which is quite important to track update history: who made this change, RStudio needs to be linked to appropriate Github account.<br>
+
  ✅ Make sure to use the exact same email address you used to create your Github account.<br>
+ 
  ✅ This will be reflected only your future updates. Past updates cannot be cahnged (although your updates themselves should be safely pushed.)<br>
 
 
@@ -238,6 +244,7 @@ knitr::include_graphics("42_History(GitHub).png")
 
 3. Click any commit to see exactly which lines were added or removed in every file.<br>
 4. To see who wrote each specific line of a file, open the file and click **Blame**. GitHub will annotate every line with the author and the date it was last changed.<br>
+
 ```{r, echo=FALSE, out.width="80%", fig.align="left"}
 knitr::include_graphics("42_Diff(GitHub).png")
 ```
@@ -272,6 +279,7 @@ knitr::include_graphics("42_History.png")
 ```
 
 2. Find the commit you want to restore and copy its short hash / SHA (e.g., `3a6536d8`).<br>
+
 ```{r, echo=FALSE, out.width="80%", fig.align="left"}
 knitr::include_graphics("44_Hash.png")
 ```
@@ -350,21 +358,22 @@ knitr::include_graphics("54_PullRequest.png")
 
 A **branch** is an independent copy of the project where you can work freely without affecting the `main` version that everyone shares. Think of it like making a photocopy of a document to draft edits on — you only update the original once you are happy with your changes.
 
-**Why branches matter for teams:**
+**Why branches matter for teams:**<br>
 
 - Team members can work on different features at the same time without interfering with each other
 - The `main` branch always stays clean and working
 - If something breaks on your branch, it does not affect anyone else
 
-**How to create a branch in RStudio:**
+**How to create a branch in RStudio:**<br>
 
-1. In the Git tab, click the **branch icon** (purple icon near the top right of the Git pane).
+1. In the Git tab, click the **branch icon** (purple icon near the top right of the Git pane).<br>
+
 ```{r, echo=FALSE, out.width="80%", fig.align="left"}
 knitr::include_graphics("47_Branch.png")
 ```
 
-2. Type a descriptive name for your branch (e.g., `feature/add-section-5` or `fix/typo-introduction`).
-3. Click **Create**. RStudio will automatically switch you to that branch
+2. Type a descriptive name for your branch (e.g., `feature/add-section-5` or `fix/typo-introduction`).<br>
+3. Click **Create**. RStudio will automatically switch you to that branch<br>
 ```{r, echo=FALSE, out.width="20%", fig.align="left"}
 knitr::include_graphics("47_Branch2.png")
 ```
