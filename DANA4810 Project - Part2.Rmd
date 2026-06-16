@@ -1,8 +1,13 @@
 ---
 title: "DANA 4810 Project Part 2"
 output:
-  word_document: default
-  html_document: default
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+  pdf_document:
+    toc: true
+    toc_depth: '3'
 date: "2026-06-15"
 ---
 
