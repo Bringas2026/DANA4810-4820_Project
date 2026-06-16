@@ -303,8 +303,6 @@ This will automatically download any commits made on Github and merge them with 
 
 #### 4.6 How to communicate with team members
 
-**Commit messages as communication:**
-
 Good communication is what keeps a team from stepping on each other's work. GitHub gives you several built-in tools for this:
 
 **Commit messages as communication:**
@@ -317,6 +315,7 @@ Every commit message is visible to the whole team in the history. Writing clear 
 "Fix merge conflict in introduction"
 "Update Do's and Don'ts table with new examples"
 ```
+
 **GitHub Issues:**
 
 Issues are like a built-in task board inside your repository. You can use them to:
@@ -325,7 +324,22 @@ Issues are like a built-in task board inside your repository. You can use them t
 - Assign tasks to specific team members
 - Track progress — close the Issue when the task is done
 
-To create an Issue: Go to your repository on GitHub → click the **Issues** tab → click **New Issue**.
+**Steps to create an Issue:**<br>
+
+1. Go to your repository on GitHub.<br>
+2. Click the **Issues** tab.<br>
+3. Click **New Issue**, describe the task or problem, and click **Submit**.<br>
+
+```{r, echo=FALSE, out.width="80%", fig.align="left"}
+knitr::include_graphics("53_Issues.png")
+```
+
+**Pull Request comments:**<br>
+
+When a teammate reviews your work before it gets merged into `main` (see Section 5.1), they leave their feedback directly on the Pull Request as comments. This keeps the whole discussion about a change attached to the exact lines being discussed, instead of getting scattered across email or chat.
+```{r, echo=FALSE, out.width="80%", fig.align="left"}
+knitr::include_graphics("54_PullRequest.png")
+```
 
 #### 4.7 Understanding Branches
 
