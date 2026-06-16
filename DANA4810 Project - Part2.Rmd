@@ -233,13 +233,16 @@ knitr::include_graphics("42_History(GitHub).png")
 knitr::include_graphics("42_Diff(GitHub).png")
 ```
    
-#### 4.3 How to restore from a Local Changes (Before Commit) / staging area
+#### 4.3 How to restore from a Local Changes (Before Commit)
 If you have edited a file but have not yet committed, you can discard your local changes and return the file to the last committed version.<br>
 
 **In RStudio:**<br>
 
 1. In the **Git** tab, right-click the file you want to restore.<br>
 2. Select **Revert...** and confirm.<br>
+```{r, echo=FALSE, out.width="80%", fig.align="left"}
+knitr::include_graphics("43_Revert.png")
+```
 
 **In the terminal:**<br>
 
@@ -318,13 +321,17 @@ A **branch** is an independent copy of the project where you can work freely wit
 **How to create a branch in RStudio:**
 
 1. In the Git tab, click the **branch icon** (purple icon near the top right of the Git pane).
+```{r, echo=FALSE, out.width="80%", fig.align="left"}
+knitr::include_graphics("47_Branch.png")
+```
 2. Type a descriptive name for your branch (e.g., `feature/add-section-5` or `fix/typo-introduction`).
 3. Click **Create**. RStudio will automatically switch you to that branch
-```{r}
-
+```{r, echo=FALSE, out.width="20%", fig.align="left"}
+knitr::include_graphics("47_Branch2.png")
 ```
 
-=======
+
+==========================================================================================
 
 ### 5. Best Practices for Collaboration
 
