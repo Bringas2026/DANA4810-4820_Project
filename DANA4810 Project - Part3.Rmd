@@ -15,4 +15,37 @@ knitr::opts_chunk$set(echo = TRUE)
 # Instruction Manual
 ## Cross-validation Techniques
 
+---
+
+### 1. Introduction
+
+---
+
+### 2. Data split technique
+
+---
+
+### 3. Leave One Out Cross Validation (LOOCV)
+
+---
+
+### 4. k-fold Cross Validation
+
+---
+
+### 5. Repeated k-fold Cross Validation
+
+---
+
+### 6. Summary
+
+---
+
+### References and Sources
+
+---
+
+### Document Update History
+
+June dd 2026,  New Creation<br>
 
