@@ -45,7 +45,7 @@ Our objective here is to assess if the age is a significant predictor for the ho
 10^{-7}$) that is below the significance threshold of 0.05
 Interpretation: there is statistically significant evidence that age
 is a meaningful predictor of household size, and therefore the model with
-age is preferred over the null model.
+age is preferred over the null model 
 
 ## 4.4.6 Second Order Model
 
