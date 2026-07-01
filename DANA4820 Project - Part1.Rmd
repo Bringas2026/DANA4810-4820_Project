@@ -13,10 +13,12 @@ knitr::opts_chunk$set(echo = TRUE)
 **Team members: Nandini Bhatia, Diego Alberto, Khushpreet Kaur, Haruka Sawakami**
 
 # Part (a)
-# 4. Poisson Regression
 ## Summary of the Beyond Multiple Linear Regression, Chapter 4
 
-```{r load_packages4, message = FALSE, warning=FALSE}
+---
+
+# 4. Poisson Regression
+```{r load_packages4, message = FALSE, warning=FALSE, include=FALSE}
 # Packages required for Chapter 4
 #install.packages("mosaic")
 #install.packages("pscl")
@@ -167,15 +169,140 @@ In this section, we overview the three case studies introduced in the textbook, 
 2. **Campus Crime:** Introduces offsets to account for sampling effort and overdispersion when actual variability exceeds what is expected.
 3. **Weekend Drinking:** Uses a modification of a Poisson model to account for more zeros than expected.
 
-*Note: Since the topics covered with campus crime and weekend drinking case studies are beyond the scope of our course, we will focus exclusively on the first case study: Household Size in the Philippines.*
+*Note: Since the topics covered with campus crime and weekend drinking case studies are beyond the scope of our course, we will focus exclusively on the first case study: <u>Household Size in the Philippines.</U>*
 
 
+## 4.4 Case Study: Household Size in the Philippines
+This case study explores how household size varies across different demographics in the Philippines, illustrating how international agencies utilize such data to determine population needs.
+
+The analysis is guided by two primary questions:
+*1. At what age are heads of households in the Philippines most likely to find the largest number of people in their household?*
+*2. Is this association between household size and the head's age similar for poorer households?* To answer these questions, we examine the relationship between household size and the age of the household head, while controlling for location and income level.
 
 
-## Chapter 4.4
-### Chapter 4.4.1
-### Chapter 4.4.2
-### Chapter 4.4.3
+### 4.4.1 Data Organization
+```{r, include=FALSE}
+fHH1 <- read_csv("data/fHH1.csv")
+```
+
+The data used in this study is a subset of 1,500 observations sampled from the 40,000 total observations in the 2015 Family Income and Expenditure Survey (FIES), which is conducted every three years by the Philippine Statistics Authority (PSA). In this data set, the variables and defined as follows:
+
+**Response Variable ($Y$)**
+
+- **`total`:** The number of household **members other than the head of the household**. Because this represents a discrete count, it is modeled as a Poisson response where the parameter of interest is $\lambda$ (the average number of non-head members per household).
+
+**Explanatory Variable ($X$)**
+
+- **`age`:** The age of the head of the household (continuous variable).
+- **`roof`:** The type of roof material, categorized into predominantly light/salvaged material (used as a proxy to measure poorer households) or predominantly strong material (categorical variable).
+- **`location`:** The geographic five regions (Central Luzon, Davao Region, Ilocos Region, Metro Manila, and Visayas) of the household (categorical variable).
+- **`numLT5`:** The number of household members under 5 years old (discrete count variable).
+
+```{r, fHH1table1, echo=FALSE, comment=NA}
+headfHH1 <- fHH1 %>%
+  filter(row_number() < 6)
+kable(headfHH1, booktabs=T,
+      caption="The first five observations from the Philippines Household case study, our data set `fHH1.csv`.")
+```
+
+
+### 4.4.2 Exploratory Data Analyses
+In this section, we perform Exploratory Data Analysis (EDA) to examine the descriptive statistics of the dataset and visually evaluate the data to verify the four assumptions of Poisson regression.
+The household size (excluding the head) ranges from 0 to 16, with an overall mean of $3.68$ and a variance of $5.53$. 
+By Roof Material, over 11.1\% of households are made from predominantly light/salvaged material. The mean household size is highly similar between groups: $3.69$ (variance of $5.55$) for strong roofs, and $3.64$ (variance of $5.41$) for light/salvaged roofs.
+By Location, the Visayas region has the largest average household size mean of $3.90$, while the Davao Region has the smallest mean of $3.39$.
+
+#### Step by Step Checking Assumptions:
+- **Assumption 1: Poisson Response**<br>
+   The overall histogram of household size is clearly right-skewed, confirming the data is not normally distributed. When grouped by the primary explanatory variable `age` of the household head, the distributions behave reasonably like discrete counts, suggesting that the Poisson Response assumption is satisfactory.
+   
+```{r, totalPoisByAge, fig.align="center", out.width="60%", fig.cap= 'Distribution of household sizes by age group of the household head.', echo=FALSE, warning = FALSE}
+cuts = cut(fHH1$age,
+           breaks=c(15,20,25,30,35,40,45,50,55,60,65,70))
+ageGrps <- data.frame(cuts,fHH1)
+
+ggplot(data = ageGrps, aes(x = total)) +
+  geom_histogram(binwidth = .25, color = "black", 
+                 fill = "white") +
+  facet_wrap(cuts) +
+  xlab("Household size")
+```
+   
+- **Assumption 2: Independence**<br>
+   Due to a lack of detailed background information regarding the sampling process and household relationships in this subset, a formal verification of the Independence assumption is not possible. If households were clustered (e.g., selected by village with shared customs) rather than sampled individually at random, independence would be violated. However, we proceed assuming independence holds.
+   
+- **Assumption 3: Mean = Variance**<br>
+   To evaluate whether the mean equals the variance, the empirical means and variances of household sizes are calculated across 5-year age intervals. While variance generally increases with age, it is smaller than the mean at younger ages and larger at older ages. This potentially evidents a violation of mean = variance, though the authors note that these violations are modest for now.
+   
+```{r, table1chp4, echo=FALSE, message = FALSE}
+# Mean = Variance
+table1chp4<- ageGrps  %>% group_by(cuts)  %>% 
+  summarise(mnNum= mean(total),varNum=var(total),n=n())
+kable(table1chp4, booktabs=T, 
+      caption="Compare mean and variance of household size within each age group.",
+      col.names = c("Age Groups", "Mean", "Variance", "n")) %>%
+  kable_styling(full_width = F)
+```
+   
+- **Assumption 4: Linearity**<br>
+   Because the true mean rate $\lambda_i$ is unknown, we cannot directly assess linearity on the log scale using standard scatterplots. To resolve this, we utilize **empirical log means** against age. The resulting plot reveals a curved trend rather than a straight line, indicating that a linear term alone is insufficient and a **quadratic term $\text{age}^2$** should be considered. In addition, plotting separate curves for each region shows a highly similar trend across locations. If these trends differed significantly, an age-by-region interaction term would be required.
+   
+```{r, byregion, fig.align="center", out.width="60%", fig.cap= 'Empirical log of the mean household sizes vs. age of the head of household, with loess smoother by region.', echo=FALSE, warning = FALSE, message = FALSE}
+sumStats2 <- fHH1 %>% group_by(age, location) %>% 
+  summarise(mntotal = mean(total),
+            logmntotal = log(mntotal), n=n())
+
+ggplot(sumStats2, aes(x=age, y=logmntotal, color=location,
+                      linetype = location, shape = location)) +
+  geom_point()+
+  geom_smooth(method = "loess", se=FALSE)+
+  xlab("Age of head of the household") +
+  ylab("Log empirical mean household size") 
+```
+
+
+### 4.4.3 EEstimation and Inference
+Based on the previous EDA, we begin our formal model evaluation by fitting a baseline linear Poisson model, where $\log(\lambda)$ is modeled as a linear function of `age`. The estimated regression equation reported by R is:
+$$\log(\hat{\lambda}) = 1.55 - 0.0047\text{age}$$
+
+#### Interpretation of Coefficients:
+In Poisson regression, because the response variable is logged, we interpret the effects multiplicatively rather than additively.
+By comparing the model at age $x$ and age $x+1$, we find that exponentiating the coefficient ($e^{\beta_1}$) yields the **multiplicative factor** (also known as the **rate ratio** or **relative risk**).
+
+\begin{equation}
+\begin{split}
+log(\lambda_X) &= \beta_0 + \beta_1X \\
+log(\lambda_{X+1}) &= \beta_0 + \beta_1(X+1) \\
+log(\lambda_{X+1})-log(\lambda_X) &=  \beta_1 \\
+log \left(\frac{\lambda_{X+1}}{\lambda_X}\right)   &= \beta_1\\
+\frac{\lambda_{X+1}}{\lambda_X} &= e^{\beta_1}
+\end{split}
+(\#eq:rateRatio)
+\end{equation}
+
+Here, $e^{-0.0047} = 0.995$. This means that with each additional year of age of the household head, the mean household size decreases by $0.5\%$ (since $1 - 0.995 = 0.005$). Conversely, a 1-year decrease in age predicts a $0.47\%$ increase in size.
+Generally, logged variables express multiplicative effects on the original scale, whereas unlogged variables express usual additive effects.
+
+
+#### Confidence Intervals (CI) using Standard Error (SE):
+R output provides a Standard Error (SE=0.00094) for the age coefficient, allowing us to construct a 95% Confidence Interval. It is best practice to construct the confidence interval for the raw coefficient first and then exponentiate the endpoints. This is because the estimated coefficients ($\hat{\beta}_1$) follow a normal distribution much more closely than the exponentiated coefficients.
+Resulting Interval is that exponentiating the endpoints yields a multiplicative factor interval of (e−0.0065,e−0.0029)=(0.993,0.997). We are 95% confident that the mean household size decreases between 0.7%  and 0.3% for each additional year.
+
+\[(\hat\beta_1-Z^*\cdot SE(\hat\beta_1), \quad \hat\beta_1+Z^*\cdot SE(\hat\beta_1))\]
+\[(-0.0047-1.96*0.00094, \quad -0.0047+1.96*0.00094)\]
+\[ (-0.0065, -0.0029).
+ \]
+
+
+#### Hypothesis Testing and Significance:
+To test whether `age` is significantly associated with household size ($H_0: \beta_1 = 0$ vs. $H_a: \beta_1 \neq 0$), we evaluate it in two ways:
+
+**1. Confidence Interval Approach:** The 95% CI for the multiplicative factor ($e^{\beta_1}$) is $(0.993, 0.997)$, which does not include $1$ (likewise, the 95% CI for the raw coefficient $\beta_1$ does not include $0$). Because $1$ represents "no change" on the multiplicative scale, excluding $1$ indicates that the model with `age` is significantly preferred over an intercept-only model.
+
+**2. Wald-type Test:** A Wald-type test statistic is calculated by dividing the estimated coefficient by its SE. Under a sufficiently large sample size ($n$), this test statistic follows a standard normal distribution when $H_0$ is true:** $$Z = \frac{\hat{\beta}_1}{\text{SE}(\hat{\beta}_1)} = \frac{-0.0047}{0.00094} = -5.026$$
+The two-sided p-value is nearly zero ($p = 0.000000501$). This provides statistically overwhelming evidence ($Z = -5.026, p < .001$) that the average household size significantly decreases as the age of the household head increases.
+
+
 ### Chapter 4.4.4
 ### Chapter 4.4.5
 ### Chapter 4.4.6
