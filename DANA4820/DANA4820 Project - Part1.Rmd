@@ -188,7 +188,38 @@ In this section, we overview the three case studies introduced in the textbook, 
 *Note: Since the topics covered with campus crime and weekend drinking case studies are beyond the scope of our course, we will focus exclusively on the first case study: Household Size in the Philippines.*
 
 
-## Chapter 4.4
+## 4.4 Case Study: Household Size in the Philippines
+
+How many people live in your home? The number of people sharing a house 
+differs from country to country and region to region. International 
+agencies use household size when determining the needs of populations, 
+so understanding what drives these differences is practically important.
+
+In this case study we look at household size in the Philippines and try 
+to answer two main questions:
+
+1. *At what age are heads of households in the Philippines most likely 
+to find the largest number of people in their household?*
+2. *Is this association between household size and the head's age similar 
+for poorer households?*
+
+To answer these, we look at the relationship between household size and 
+the age of the household head, while also controlling for where the 
+household is located and what type of roof material they have (used as 
+a proxy for income level).
+
+The data comes from the 2015 Family Income and Expenditure Survey (FIES), 
+conducted by the Philippine Statistics Authority (PSA). Our dataset is a 
+subset of 1,500 observations drawn from 40,000 total, focusing on five 
+regions: Central Luzon, Metro Manila, Ilocos Region, Davao Region, and 
+Visayas.
+
+Our response variable $Y$ is the number of household members other than 
+the head of the household. Since this is a count variable — it can only 
+take values 0, 1, 2, 3... — we use Poisson regression where the 
+parameter of interest is $\lambda$, the average number of non-head 
+members per household.
+
 ### Chapter 4.4.1
 ### Chapter 4.4.2
 ### Chapter 4.4.3
