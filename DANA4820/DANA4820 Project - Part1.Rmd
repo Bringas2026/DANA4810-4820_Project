@@ -354,6 +354,7 @@ exp(confint(modela))
 **1. Confidence Interval Approach:** The 95% CI for the multiplicative factor ($e^{\beta_1}$) is $(0.993, 0.997)$, which does not include $1$ (likewise, the 95% CI for the raw coefficient $\beta_1$ does not include $0$). Because $1$ represents "no change" on the multiplicative scale, excluding $1$ indicates that the model with `age` is significantly preferred over an intercept-only model.
 
 **2. Wald-type Test:** A Wald-type test statistic is calculated by dividing the estimated coefficient by its SE. Under a sufficiently large sample size ($n$), this test statistic follows a standard normal distribution when $H_0$ is true:** $$Z = \frac{\hat{\beta}_1}{\text{SE}(\hat{\beta}_1)} = \frac{-0.0047}{0.00094} = -5.026$$
+The two-sided p-value is nearly zero ($p = 0.000000501$). This provides statistically overwhelming evidence ($Z = -5.026, p < .001$) that the average household size significantly decreases as the age of the household head increases.
 
 
 ## 4.4.4 Using Deviances to Compare Models
