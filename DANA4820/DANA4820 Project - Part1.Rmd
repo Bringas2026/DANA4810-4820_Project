@@ -1,8 +1,9 @@
 ---
 title: "DANA 4820 Project Part 1"
 output:
-  word_document: default
+  pdf_document: default
   html_document: default
+  word_document: default
 date: "2026-07-01"
 ---
 
@@ -325,6 +326,10 @@ each group of X. We check this by comparing the empirical means and
 variances across 5-year age groups.
 
 ```{r, message=FALSE}
+=cuts <- cut(fHH1$age,
+            breaks = c(15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70))
+ageGrps <- data.frame(cuts, fHH1)
+
 table_mv <- ageGrps %>%
   group_by(cuts) %>%
   summarise(Mean = round(mean(total), 3),
