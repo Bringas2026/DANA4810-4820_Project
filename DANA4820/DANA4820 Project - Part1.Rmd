@@ -1,6 +1,8 @@
 ---
 title: "DANA 4820 Project Part 1"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 date: "2026-07-01"
 ---
 
