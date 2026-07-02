@@ -4,6 +4,8 @@ output:
   word_document: default
   html_document: default
 date: "2026-07-01"
+always_allow_html: true
+
 ---
 
 ```{r setup, include=FALSE}
@@ -75,7 +77,7 @@ For a Poisson regression model to use, the following four key assumptions must b
 
 
 ### 4.2.2 A Graphical Look at Poisson Regression
-```{r, OLSpois, fig.align="center",out.width="60%", fig.cap='Regression models: Linear regression (left) and Poisson regression (right).',echo=FALSE, warning=FALSE, message=FALSE}
+```{r, OLSpois, ,out.width="60%", fig.cap='Regression models: Linear regression (left) and Poisson regression (right).',echo=FALSE, warning=FALSE, message=FALSE}
 ## Sample data for graph of OLS normality assumption
 ## Code from https://stackoverflow.com/questions/31794876/ggplot2-how-to-curve-small-gaussian-densities-on-a-regression-line?rq=1
 
@@ -230,7 +232,7 @@ fHH1  %>% group_by(location)  %>%
             var=var(total), n=n())
 ```
 
-```{r, nhouse, fig.align="center",out.width="60%", fig.cap='Distribution of household size in 5 Philippine regions.',echo=FALSE, warning=FALSE, message=FALSE}
+```{r, nhouse, ,out.width="60%", fig.cap='Distribution of household size in 5 Philippine regions.',echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(fHH1, aes(total)) + 
   geom_histogram(binwidth = .25, color = "black", 
                  fill = "white") + 
@@ -242,7 +244,7 @@ ggplot(fHH1, aes(total)) +
 - **Assumption 1: Poisson Response**<br>
    The overall histogram of household size is clearly right-skewed, confirming the data is not normally distributed. When grouped by the primary explanatory variable `age` of the household head, the distributions behave reasonably like discrete counts, suggesting that the Poisson Response assumption is satisfactory.
    
-```{r, totalPoisByAge, fig.align="center", out.width="60%", fig.cap= 'Distribution of household sizes by age group of the household head.', echo=FALSE, warning = FALSE}
+```{r, totalPoisByAge, , out.width="60%", fig.cap= 'Distribution of household sizes by age group of the household head.', echo=FALSE, warning = FALSE}
 cuts = cut(fHH1$age,
            breaks=c(15,20,25,30,35,40,45,50,55,60,65,70))
 ageGrps <- data.frame(cuts,fHH1)
@@ -273,7 +275,7 @@ kable(table1chp4, booktabs=T,
 - **Assumption 4: Linearity**<br>
    Because the true mean rate $\lambda_i$ is unknown, we cannot directly assess linearity on the log scale using standard scatterplots. To resolve this, we utilize **empirical log means** against age. The resulting plot reveals a curved trend rather than a straight line, indicating that a linear term alone is insufficient and a **quadratic term $\text{age}^2$** should be considered. In addition, plotting separate curves for each region shows a highly similar trend across locations. If these trends differed significantly, an age-by-region interaction term would be required.
    
-```{r, ageXnhouse,fig.align="center",out.width="60%",fig.cap= 'The log of the mean household sizes, besides the head of household, by age of the head of household, with loess smoother.', echo=FALSE, warning = FALSE, message = FALSE}
+```{r, ageXnhouse,,out.width="60%",fig.cap= 'The log of the mean household sizes, besides the head of household, by age of the head of household, with loess smoother.', echo=FALSE, warning = FALSE, message = FALSE}
 ## Checking linearity assumption: Empirical log of the means plot
 sumStats <- fHH1 %>% group_by(age) %>% 
   summarise(mntotal = mean(total),
@@ -286,7 +288,7 @@ ggplot(sumStats, aes(x=age, y=logmntotal)) +
   ylab("Log of the empirical mean number in the house") 
 ```
 
-```{r, byregion, fig.align="center", out.width="60%", fig.cap= 'Empirical log of the mean household sizes vs. age of the head of household, with loess smoother by region.', echo=FALSE, warning = FALSE, message = FALSE}
+```{r, byregion, , out.width="60%", fig.cap= 'Empirical log of the mean household sizes vs. age of the head of household, with loess smoother by region.', echo=FALSE, warning = FALSE, message = FALSE}
 sumStats2 <- fHH1 %>% group_by(age, location) %>% 
   summarise(mntotal = mean(total),
             logmntotal = log(mntotal), n=n())
@@ -356,11 +358,17 @@ exp(confint(modela))
 **1. Confidence Interval Approach:** The 95% CI for the multiplicative factor ($e^{\beta_1}$) is $(0.993, 0.997)$, which does not include $1$ (likewise, the 95% CI for the raw coefficient $\beta_1$ does not include $0$). Because $1$ represents "no change" on the multiplicative scale, excluding $1$ indicates that the model with `age` is significantly preferred over an intercept-only model.
 
 **2. Wald-type Test:** A Wald-type test statistic is calculated by dividing the estimated coefficient by its SE. Under a sufficiently large sample size ($n$), this test statistic follows a standard normal distribution when $H_0$ is true:** $$Z = \frac{\hat{\beta}_1}{\text{SE}(\hat{\beta}_1)} = \frac{-0.0047}{0.00094} = -5.026$$
-Th
+The two-sided p-value is nearly zero ($p = 0.000000501$). This provides statistically overwhelming evidence ($Z = -5.026, p < .001$) that the average household size significantly decreases as the age of the household head increases.
+
 
 ## 4.4.4 Using Deviances to Compare Models
 
-Our objective here is to assess if the age is a significant predictor for the household size, a drop in deviance test was conducted to compare the null model to the model incorporating age as linear predictor.  
+Our objective here is to assess if the age is a significant predictor for the household size, a drop in deviance test was conducted to compare the null model to the model incorporating age as linear predictor. 
+A deviance measures how much unexplained variability is left in the model 
+— the smaller the deviance, the better the model fits. The drop-in-deviance 
+is simply the difference between the deviance of the smaller model and the 
+larger model. If this drop is large enough, it means the added term 
+significantly improved the model.
 The hypotheses are formally stated as follows:
 
 $$H_0: \log(\lambda) = \beta_0 \quad (\beta_1 = 0, \text{ age is not a significant predictor})$$
