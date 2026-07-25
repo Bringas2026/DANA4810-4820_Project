@@ -1,0 +1,152 @@
+---
+title: "Cross-Validation Techniques: A Comparative Study"
+author: "Team Names Here"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  html_document:
+    df_print: paged
+  pdf_document:
+    number_sections: true
+subtitle: Using the Cleveland Heart Disease Dataset
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(caret)
+library(boot)
+library(ggplot2)
+library(knitr)
+library(tidyverse)
+set.seed(2026)
+```
+
+# Introduction
+
+# The Dataset
+We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/45/heart+disease) (cleveland.csv) to evaluate the four Cross-validation techniques based on the following criteria:
+
+1. **Moderate Sample Size ($N = 303$)**<br>
+This sample size ($N = 303$) is ideal for evaluating each technique. It is neither too small nor too large. It is large enough to retain sufficient data after dividing into two sets (especially for the Data Split technique), while being small enough to run computationally intensive methods like LOOCV efficiently without taking too much time.
+
+2. **Reliability of Data Source and Practical Context**<br>
+The UCI Machine Learning Repository is a widely recognized and trusted data source. In addition, predicting the presence of heart disease provides a clear, highly practical medical analytics case study for comparing performance across techniques.
+
+
+## Data Cleaning Pipeline
+
+### Step 1: Load the raw data and add column headers
+
+```{r step1-headers}
+# The file downloaded from UCI has NO header row, so we set header = FALSE
+# and assign the official column names ourselves. We also tell R to treat
+# both "?" and blank cells as missing values (na.strings).
+raw <- read.csv(r"(data/cleveland.csv)", header = FALSE,
+                 na.strings = c("?", ""))
+
+colnames(raw) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+                    "thalach", "exang", "oldpeak", "slope", "ca", "thal", "num")
+
+cat("Raw data dimensions:", nrow(raw), "rows x", ncol(raw), "columns\n")
+head(raw)
+```
+
+### Step 2: Handle missing values
+
+```{r step2-missing}
+# Only 'ca' and 'thal' contain missing values in this dataset
+cat("Missing values per column:\n")
+print(colSums(is.na(raw)))
+
+# Only 6 of 303 rows are affected (~2%), so we drop those rows rather
+# than impute, to keep things simple
+raw <- na.omit(raw)
+cat("\nRows remaining after removing missing values:", nrow(raw), "\n")
+```
+
+### Step 3: Prepare the target variable
+
+```{r step3-target}
+# 'num' is coded 0-4 (0 = no disease, 1-4 = increasing severity).
+# We binarize it: 0 = no disease, 1 = disease present
+raw$target <- ifelse(raw$num > 0, 1, 0)
+raw$num <- NULL
+
+# Turn target and sex into labeled factors for readability
+raw$sex    <- factor(raw$sex,    levels = c(0, 1), labels = c("female", "male"))
+#raw$target <- factor(raw$target, levels = c(0, 1), labels = c("no_disease", "disease"))
+
+# Also turn other categorical variables into factors
+categorical_cols <- c("cp", "fbs", "restecg", "exang", "slope", "ca", "thal")
+raw[categorical_cols] <- lapply(raw[categorical_cols], factor)
+
+heart <- raw
+
+```
+
+## Exploratory Data Analysis
+
+# Technique 1: Data Split (Train/Test)
+
+## The idea
+
+Data Split is the simplest and most commonly used validation technique. The main idea is to randomly divide the dataset into two non-overlapping subsets:
+
+- **Training Set (e.g., 80%):** Used to fit and estimate the parameters of the predictive model.
+- **Test Set (e.g., 20%):** Kept completely untouched during training and used exclusively to evaluate how well the model performs.
+
+By testing the model on data it has never seen before, this technique helps detect and prevent **overfitting**—a scenario where a model performs exceptionally well on training data but poorly on real-world test data.
+Note that, this technique is only useful when we have a large data set enough to be partitioned. There is a disadvantage that we build a model on a fraction of the dataset only. It may cause a leaving out some important information or leading to higher bias.
+
+
+## Implementation
+
+```{r}
+# Split the data into two set: training and test
+training.samples <- raw$target %>% createDataPartition(p = 0.8, list = FALSE)
+train.data <- raw[training.samples, ]
+test.data  <- raw[-training.samples, ]
+
+# Build the model
+model <- lm(target ~., data = train.data)
+
+# Make predictions and compute the R2, RMSE, and MAE
+predictions <- model %>% predict(test.data)
+data.frame(R2   = R2(predictions, test.data$target),
+           RMSE = RMSE(predictions, test.data$target),
+           MAE  = MAE(predictions, test.data$target))
+```
+
+## Comment
+
+- $R^2$ ($\approx 0.370$): Indicates that our linear model explains approximately 37.0% of the variance in heart disease presence using the training predictors.
+
+- RMSE ($\approx 0.423$) & MAE ($\approx 0.326$): On average, the model's predictions deviate from the true binary outcome ($0$ or $1$) by about $0.326$. The higher RMSE relative to MAE suggests the presence of some larger prediction errors on specific test samples.
+
+Because the evaluation relies on a single random split, the test results are highly sensitive to how the data was partitioned (high variance in evaluation performance). This unstability illustrates why more robust techniques, such as $k$-fold or LOOCV, are necessary for moderate-sized datasets.
+
+
+# Technique 2: Leave-One-Out Cross-Validation (LOOCV)
+
+## The idea
+
+## Implementation
+
+## Comment
+
+# Technique 3: k-fold Cross-Validation
+
+## The idea
+
+## Implementation
+
+## Comment
+
+# Technique 4: Repeated k-fold Cross-Validation
+
+## The idea
+
+## Implementation
+
+## Comment
+
+
