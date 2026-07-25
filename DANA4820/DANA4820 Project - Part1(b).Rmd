@@ -1,0 +1,207 @@
+---
+title: "D4820 Project Part 1 - Poisson Regression"
+author: "Khushpreet Kaur, Nandini Bhatia, Diego Alberto, Haruka Sawakami"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    keep_tex: true
+linkcolor: blue
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(gridExtra)
+library(knitr)
+library(MASS)
+library(tidyverse)
+```
+
+
+## PART B - CONCEPTS OF POISSON REGRESSION ON ELEPHANT DATASET 
+
+For this, we will be using **Elephants Matings** Dataset from Beyond MLR textbook Dataset repository. Here, we will be looking for mating success of male African elephants. We will see **how AGE influences the number of successful MATINGS**.
+
+## 1. Dataset Overview
+
+MATINGS - Number of successful Matings(Response variable)
+AGE - age of male elephant
+
+```{r partb-data2}
+elephant <- read.csv("data\\elephant.csv")
+head(elephant)
+```
+
+**Case Study Overview**
+
+The elephants dataset contains observational data on african elephants trying to figure out how age relates to mating success. Each row in the dataset represents one elephant and our primary goal is to understand how mating results varies throughout the life of an elephant. We will also see how poisson regression is a better fit here providing non negative responses and variance increase with increase in mean. 
+
+
+## 2. Graphical representation of Poisson VS Linear Regression
+
+```{r 1}
+p_elep1 <- ggplot(elephant, aes(x = AGE, y = MATINGS)) + geom_point() + geom_smooth(method="lm", color="black", se=FALSE) + theme_minimal() + labs(title="Linear Regression")
+
+p_elep2 <- ggplot(elephant, aes(x = AGE, y = MATINGS)) + 
+  geom_point() + geom_smooth(method="glm", method.args=list(family="poisson"), color="black", se=FALSE) + 
+  theme_minimal() + labs(title="Poisson Regression")
+
+grid.arrange(p_elep1, p_elep2, ncol=2)
+```
+
+## 3. Exploratory Data Analysis
+
+
+
+**Distribution of Elephant Matings**
+
+```{r 2}
+ggplot(elephant, aes(x = MATINGS)) + 
+  geom_bar(fill="orange", color="black") +
+  theme_minimal() + labs(title="Distribution of Elephant Matings", x="Number of Matings")
+```
+
+The bar plot shows the distribution of mating counts in the elephant dataset. Here ecah bar shows how many elephants achieved given number of successful matings. From the graph we can see most elephants have low mating counts, while only a few have higher counts.The data is not symmetric, not normally distributed, and have variance that grows with the mean.
+
+## 4. Distribution by Age groups
+
+```{r 3}
+# Create age groups
+elephant <- elephant %>% 
+  mutate(AgeGroup = cut(AGE, breaks=seq(25, 55, by=10)))
+
+ggplot(elephant, aes(x = MATINGS)) + 
+  geom_bar(fill="orange", color="black") +
+  facet_wrap(~AgeGroup) +
+  theme_minimal() + labs(title="Mating Counts by Age Group")
+```
+
+**Mean and Variance comparison**
+
+```{r 4}
+tab_elep <- elephant %>% 
+  filter(!is.na(AgeGroup)) %>%
+  group_by(AgeGroup) %>%
+  summarize(Mean = mean(MATINGS),
+            Variance = var(MATINGS),
+            n = n())
+kable(tab_elep, digits=3)
+```
+
+We could observe the increase in variance with increase in mean and also matings is a non negative count Variable so a Poisson regression with a log link is more appropriate than a linear model.
+
+## 5. Empirical Means Plot
+
+```{r 5}
+emp_means_elep <- elephant %>%
+  group_by(AGE) %>%
+  summarize(emp_mean = mean(MATINGS)) %>%
+  mutate(log_emp_mean = log(emp_mean))
+
+ggplot(emp_means_elep, aes(x = AGE, y = log_emp_mean)) +
+  geom_point() + geom_smooth(method="loess", se=TRUE) +
+  theme_minimal() + labs(y = "Log of empirical mean matings")
+```
+
+
+To check the linearity assumption we tried to take the logs of the empirical means and plotting by age. The empirical‑means plot shows a smooth, monotonic increase in the log of mean mating counts with age. Although the trend is slightly curved, it remains approximately linear on the log scale, which aligns well with the assumptions of a Poisson regression model. 
+
+## 6. Model Fitting
+
+```{r 6}
+model_elep <- glm(MATINGS ~ AGE, family = poisson, data = elephant)
+summary(model_elep)$coefficients
+```
+
+**Interpretation of beta 1**
+
+**Age (e^{0.068} = 1.071):** For every one-year increase in an elephant's age, the expected number of successful matings increases by a factor of 1.071 (a 7.1% increase).
+
+### 7. Profile Likelihood Confidence Intervals 
+
+```{r 7}
+confint(model_elep)
+```
+
+```{r 8}
+exp(confint(model_elep))
+```
+The 95% confidence interval for Age is (1.045, 1.099). Since it does not include 1, age is a statistically significant predictor of mating success.
+
+Lower bound:
+1.0425585−1 = 0.0425585
+0.0425585×100 = 4.25585%
+
+Upper bound
+1.1003602−1 = 0.1003602
+0.1003602×100 = 10.03602%
+
+For every additional year of age, an elephant’s expected number of successful matings increases by between 4.3% and 10.0%, with 95% confidence.
+
+### 8. Wald-Type Statistic Demonstration
+The Wald statistic for Age is calculated as $Z = \frac{\hat{\beta_1}}{SE(\hat{\beta_1})} = \frac{0.06869}{0.01375} \approx 4.996$. This perfectly matches the $z$ value in the model output above. Therefore we have statistically significant evidence(Z=4.99 , p<0.001) to conclude that the expected number of successful matings in elephants increases with age.
+
+
+### 9. Drop-in-Deviance Test
+
+We compare the model containing `Age` to the null model to test if adding the `Age` term significantly reduces variability.
+
+```{r 9}
+model_elep0 <- glm(MATINGS ~ 1, family = poisson, data = elephant)
+anova(model_elep0, model_elep, test = "Chisq")
+```
+
+**Explanation:** The drop-in-deviance is 51.01 with 1 degree of freedom having a p-value of $9.17 \times 10^{-13}$. This proves that adding `Age` significantly improves the model over the intercept only model.
+
+
+### 10. Second Order (Quadratic) Model
+
+```{r 10}
+elephant <- elephant %>% mutate(Age2 = AGE^2)
+model_elep2 <- glm(MATINGS ~ AGE + Age2, family = poisson, data = elephant)
+summary(model_elep2)$coefficients
+
+anova(model_elep, model_elep2, test="Chisq")
+```
+
+The p-value for the drop-in-deviance comparing the linear to quadratic model is 0.666 (>0.05). Hence we can conclude that the quadratic term does **not** significantly improve the model for elephants.
+
+
+
+### 11. Adding a Covariate (Dummy Variables)
+Since the elephant dataset does not naturally contain a categorical variable, we will create a dummy variable `old_age` to demonstrate the ability to handle dummy variables. We define a "old_age" elephant as being over 40 years old.
+
+```{r 11}
+# Create the categorical dummy variable
+elephant <- elephant %>% 
+  mutate(old_age = factor(ifelse(AGE > 40, "Yes", "No")))
+
+model_elep_dummy <- glm(MATINGS ~ AGE + old_age, family = poisson, data = elephant)
+summary(model_elep_dummy)$coefficients
+```
+
+**Interpretation**
+
+In the model including AGE and the dummy variable old_age, the coefficient for MatureYes (−0.3854) indicates that old_age elephants are expected to have approximately(𝑒−0.3854 = 0.680) 0.68 times the mating count of young elephants. However the variable is not statistically significant(p = 0.311)
+
+---
+
+## References
+
+1. **Roback, P., & Legler, J.** (2021). *Beyond Multiple Linear Regression: Applied Generalized Linear Models and Multilevel Models in R*. CRC Press. 
+   * Textbook Link: [https://bookdown.org/roback/bookdown-BeyondMLR/](https://bookdown.org/roback/bookdown-BeyondMLR/)
+   * *Note: The dataset (elephants), modeling methodology, and code structures used in this project were adapted from Chapter 4 (Poisson Regression) of this textbook.*
+
+2. **UCLA Office of Advanced Research Computing (OARC)**. *Poisson Regression | R Data Analysis Examples*. 
+   * Website: [https://stats.oarc.ucla.edu/r/dae/poisson-regression/](https://stats.oarc.ucla.edu/r/dae/poisson-regression/)
+
+3. **STHDA (Statistical Tools for High-Throughput Data Analysis)**. *Poisson Regression Essentials in R*. 
+   * Website: [http://www.sthda.com/english/articles/36-classification-methods-essentials/149-poisson-regression-essentials-in-r/](http://www.sthda.com/english/articles/36-classification-methods-essentials/149-poisson-regression-essentials-in-r/)
+
+4. **R Stats Manual**. *glm: Fitting Generalized Linear Models*. 
+   * Website: [https://stat.ethz.ch/R-manual/R-devel/library/stats/html/glm.html](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/glm.html)
+
+
+
+
