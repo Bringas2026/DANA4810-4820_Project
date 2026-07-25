@@ -1,0 +1,105 @@
+---
+title: "Cross-Validation Techniques: A Comparative Study"
+subtitle: "Using the Cleveland Heart Disease Dataset"
+author: "Team Names Here"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output:
+  pdf_document:
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+library(caret)
+library(boot)
+library(ggplot2)
+library(knitr)
+set.seed(2026)
+```
+
+# Introduction
+
+# The Dataset
+
+## Data Cleaning Pipeline
+
+### Step 1: Load the raw data and add column headers
+
+```{r step1-headers}
+# The file downloaded from UCI has NO header row, so we set header = FALSE
+# and assign the official column names ourselves. We also tell R to treat
+# both "?" and blank cells as missing values (na.strings).
+raw <- read.csv(r"(C:\Users\diegu\Downloads\cleveland.csv)", header = FALSE,
+                 na.strings = c("?", ""))
+
+colnames(raw) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
+                    "thalach", "exang", "oldpeak", "slope", "ca", "thal", "num")
+
+cat("Raw data dimensions:", nrow(raw), "rows x", ncol(raw), "columns\n")
+head(raw)
+```
+
+### Step 2: Handle missing values
+
+```{r step2-missing}
+# Only 'ca' and 'thal' contain missing values in this dataset
+cat("Missing values per column:\n")
+print(colSums(is.na(raw)))
+
+# Only 6 of 303 rows are affected (~2%), so we drop those rows rather
+# than impute, to keep things simple
+raw <- na.omit(raw)
+cat("\nRows remaining after removing missing values:", nrow(raw), "\n")
+```
+
+### Step 3: Prepare the target variable
+
+```{r step3-target}
+# 'num' is coded 0-4 (0 = no disease, 1-4 = increasing severity).
+# We binarize it: 0 = no disease, 1 = disease present
+raw$target <- ifelse(raw$num > 0, 1, 0)
+raw$num <- NULL
+
+# Turn target and sex into labeled factors for readability
+raw$sex    <- factor(raw$sex,    levels = c(0, 1), labels = c("female", "male"))
+raw$target <- factor(raw$target, levels = c(0, 1), labels = c("no_disease", "disease"))
+
+heart <- raw
+
+```
+
+## Exploratory Data Analysis
+
+# Technique 1: Data Split (Train/Test)
+
+## The idea
+
+## Implementation
+
+## Comment
+
+# Technique 2: Leave-One-Out Cross-Validation (LOOCV)
+
+## The idea
+
+## Implementation
+
+## Comment
+
+# Technique 3: k-fold Cross-Validation
+
+## The idea
+
+## Implementation
+
+## Comment
+
+# Technique 4: Repeated k-fold Cross-Validation
+
+## The idea
+
+## Implementation
+
+## Comment
+
+
