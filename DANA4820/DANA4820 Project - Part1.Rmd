@@ -1,11 +1,7 @@
 ---
 title: "DANA 4820 Project Part 1"
-output:
-  word_document: default
-  html_document: default
+output: html_document
 date: "2026-07-01"
-always_allow_html: true
-
 ---
 
 ```{r setup, include=FALSE}
@@ -77,7 +73,7 @@ For a Poisson regression model to use, the following four key assumptions must b
 
 
 ### 4.2.2 A Graphical Look at Poisson Regression
-```{r, OLSpois, ,out.width="60%", fig.cap='Regression models: Linear regression (left) and Poisson regression (right).',echo=FALSE, warning=FALSE, message=FALSE}
+```{r, OLSpois, fig.align="center",out.width="60%", fig.cap='Regression models: Linear regression (left) and Poisson regression (right).',echo=FALSE, warning=FALSE, message=FALSE}
 ## Sample data for graph of OLS normality assumption
 ## Code from https://stackoverflow.com/questions/31794876/ggplot2-how-to-curve-small-gaussian-densities-on-a-regression-line?rq=1
 
@@ -232,7 +228,7 @@ fHH1  %>% group_by(location)  %>%
             var=var(total), n=n())
 ```
 
-```{r, nhouse, ,out.width="60%", fig.cap='Distribution of household size in 5 Philippine regions.',echo=FALSE, warning=FALSE, message=FALSE}
+```{r, nhouse, fig.align="center",out.width="60%", fig.cap='Distribution of household size in 5 Philippine regions.',echo=FALSE, warning=FALSE, message=FALSE}
 ggplot(fHH1, aes(total)) + 
   geom_histogram(binwidth = .25, color = "black", 
                  fill = "white") + 
@@ -244,7 +240,7 @@ ggplot(fHH1, aes(total)) +
 - **Assumption 1: Poisson Response**<br>
    The overall histogram of household size is clearly right-skewed, confirming the data is not normally distributed. When grouped by the primary explanatory variable `age` of the household head, the distributions behave reasonably like discrete counts, suggesting that the Poisson Response assumption is satisfactory.
    
-```{r, totalPoisByAge, , out.width="60%", fig.cap= 'Distribution of household sizes by age group of the household head.', echo=FALSE, warning = FALSE}
+```{r, totalPoisByAge, fig.align="center", out.width="60%", fig.cap= 'Distribution of household sizes by age group of the household head.', echo=FALSE, warning = FALSE}
 cuts = cut(fHH1$age,
            breaks=c(15,20,25,30,35,40,45,50,55,60,65,70))
 ageGrps <- data.frame(cuts,fHH1)
@@ -275,7 +271,7 @@ kable(table1chp4, booktabs=T,
 - **Assumption 4: Linearity**<br>
    Because the true mean rate $\lambda_i$ is unknown, we cannot directly assess linearity on the log scale using standard scatterplots. To resolve this, we utilize **empirical log means** against age. The resulting plot reveals a curved trend rather than a straight line, indicating that a linear term alone is insufficient and a **quadratic term $\text{age}^2$** should be considered. In addition, plotting separate curves for each region shows a highly similar trend across locations. If these trends differed significantly, an age-by-region interaction term would be required.
    
-```{r, ageXnhouse,,out.width="60%",fig.cap= 'The log of the mean household sizes, besides the head of household, by age of the head of household, with loess smoother.', echo=FALSE, warning = FALSE, message = FALSE}
+```{r, ageXnhouse,fig.align="center",out.width="60%",fig.cap= 'The log of the mean household sizes, besides the head of household, by age of the head of household, with loess smoother.', echo=FALSE, warning = FALSE, message = FALSE}
 ## Checking linearity assumption: Empirical log of the means plot
 sumStats <- fHH1 %>% group_by(age) %>% 
   summarise(mntotal = mean(total),
@@ -288,7 +284,7 @@ ggplot(sumStats, aes(x=age, y=logmntotal)) +
   ylab("Log of the empirical mean number in the house") 
 ```
 
-```{r, byregion, , out.width="60%", fig.cap= 'Empirical log of the mean household sizes vs. age of the head of household, with loess smoother by region.', echo=FALSE, warning = FALSE, message = FALSE}
+```{r, byregion, fig.align="center", out.width="60%", fig.cap= 'Empirical log of the mean household sizes vs. age of the head of household, with loess smoother by region.', echo=FALSE, warning = FALSE, message = FALSE}
 sumStats2 <- fHH1 %>% group_by(age, location) %>% 
   summarise(mntotal = mean(total),
             logmntotal = log(mntotal), n=n())
@@ -361,157 +357,10 @@ exp(confint(modela))
 The two-sided p-value is nearly zero ($p = 0.000000501$). This provides statistically overwhelming evidence ($Z = -5.026, p < .001$) that the average household size significantly decreases as the age of the household head increases.
 
 
-## 4.4.4 Using Deviances to Compare Models
-
-Our objective here is to assess if the age is a significant predictor for the household size, a drop in deviance test was conducted to compare the null model to the model incorporating age as linear predictor. 
-A deviance measures how much unexplained variability is left in the model 
-— the smaller the deviance, the better the model fits. The drop-in-deviance 
-is simply the difference between the deviance of the smaller model and the 
-larger model. If this drop is large enough, it means the added term 
-significantly improved the model.
-The hypotheses are formally stated as follows:
-
-$$H_0: \log(\lambda) = \beta_0 \quad (\beta_1 = 0, \text{ age is not a significant predictor})$$
-
-$$H_A: \log(\lambda) = \beta_0 + \beta_1\text{age} \quad (\beta_1 \neq 0, \text{ age is a significant predictor})$$
-```{r}
-# Null model
-model0 <- glm(total ~ 1, family = poisson, data = fHH1)
-
-# Model with age (linear)
-modela <- glm(total ~ age, family = poisson, data = fHH1)
-
-# Drop-in-deviance test
-drop_in_dev_1 <- anova(model0, modela, test = "Chisq")
-drop_in_dev_1
-```
-
-The null model, which contains no predictors, has a residual deviance of 2362 on 1499 degrees of freedom. When included the age as a predictor, the residual deviance decreased to 2337 on 1498 degrees of freedom, this results in a drop in deviance of 25.4 with one degree of freedom. Then we evaluate this against a chi-quare distribution with one degree of freedom, resulting in a very tiny p-value ($4.66 \times
-10^{-7}$) that is below the significance threshold of 0.05
-Interpretation: We reject $H_0$. There is statistically significant evidence that age
-is a meaningful predictor of household size, and therefore the model with
-age is preferred over the null model 
-
-## 4.4.6 Second Order Model
-
-We already showed that age matters for household size. Then when we looked at our exploratory graphs earlier(section 4.4.2), the relationship wasn't a straight line - it when up, peaked and then came down. To determine whether the quadratic term significantly improves model fit, a drop-in-deviance test is conducted comparing the linear model to the quadratic model. The hypotheses are
-formally stated as follows:
-
-$$H_0: \log(\lambda) = \beta_0 + \beta_1\text{age} \quad (\beta_2 = 0, \text{ quadratic term is not needed})$$
-
-$$H_A: \log(\lambda) = \beta_0 + \beta_1\text{age} + \beta_2\text{age}^2 \quad (\beta_2 \neq 0, \text{ quadratic term is needed})$$
-
-```{r}
-# Add quadratic term
-fHH1 <- fHH1 %>% mutate(age2 = age * age)
-
-# Fit quadratic model
-modela2 <- glm(total ~ age + age2, family = poisson, data = fHH1)
-summary(modela2)
-
-# Drop-in-deviance test: linear vs quadratic
-drop_in_dev_2 <- anova(modela, modela2, test = "Chisq")
-drop_in_dev_2
-
-# Calculate optimal age
-beta1 <- coef(modela2)["age"]
-beta2 <- coef(modela2)["age2"]
-optimal_age <- -beta1 / (2 * beta2)
-cat("Optimal age:", round(optimal_age, 2))
-
-# Maximum estimated household size
-max_log_total <- coef(modela2)[1] + beta1 * optimal_age +
-                 beta2 * optimal_age^2
-cat("Max mean household size:", round(exp(max_log_total), 3))
-```
-
-
-
-$$\log(\text{mean numHouse}) = -0.333 + 0.071 \cdot \text{age} - 0.00071 \cdot \text{age}^2$$
-
-The positive coefficient associated with the linear age  ($\hat{\beta}_1
-= 0.071$, $p < 0.001$) indicates that household size initially increases
-with the age of the household head. The negative coefficient associated
-with the quadratic term ($\hat{\beta}_2 = -0.00071$, $p < 0.001$) confirms
-the presence of a concave relationship, in other words household size reaches a
-maximum at a certain age before subsequently declining. We can expect that household size grows as children are born and raised, then decreases as children leave the household.
-
-We then asked: does adding age^2 actually make the model better or not? We compared the simpler model to the more complex model(age+age^2). The deviance dropped by 136.1 and the p-value is almost zero. Therefore  we reject $H_0$and conclude that the inclusion of the quadratic term significantly improves model fit, and the quadratic model is strongly preferred over the linear model.
-
-To determine the age at which household size is estimated to be at its
-maximum, the derivative of the fitted model with respect to age was set
-equal to zero:
-
-$$\frac{d}{d(\text{age})}\log(\text{total}) = 0.071 - 2(0.00071)\cdot\text{age} = 0$$
-$$\text{age} = 0.071 / 0.00142 \approx 50.04 \text{ years}$$
-
-To find exactly where the peak is, we use a basic calculus trick: at the very top of a curve, the slope is flat (zero). So we take the derivative of our equation, set it to zero, and solve for age. That gives us age ≈ 50.04.
-
-Then we plug that age back into the original equation to find out how big the household is at that peak. That gives us a log value of 1.441, and converting that back to a normal number (using e^1.441) gives us about 4.23 people.
-
-Interpretation: Household size peaks when the head of household is around 50 years old, with about 4.2 extra people living in the home at that point — then it starts declining again.
-
-## 4.4.7 Adding a Covariate
-
-So far our model only uses age to predict household size. But it's reasonable to think that where someone lives might also affect how many people are in their household. So we wanted to test: after we've already accounted for age, does location also matter?
-
-Location isn't a number, it's a category (Central Luzon, Davao, Ilocos, Metro Manila, Visayas), so R can't just drop it into the equation as-is. Instead, R picks one category as the "baseline" to compare everything else to — here it picked Central Luzon — and creates a 0/1 indicator for each of the other four regions. So basically, the model is asking "compared to Central Luzon, is this region higher or lower?" for each region separately. The hypotheses are formally stated 
-as follows:
-
-$$H_0: \log(\lambda) = \beta_0 + \beta_1\text{age} + \beta_2\text{age}^2 \quad (\text{location does not improve the model})$$
-
-$$H_A: \log(\lambda) = \beta_0 + \beta_1\text{age} + \beta_2\text{age}^2 + \beta_3\text{location} \quad (\text{location improves the model})$$
-
-
-
-```{r}
-# Fit quadratic model with location
-modela2L <- glm(total ~ age + age2 + location,
-                family = poisson, data = fHH1)
-summary(modela2L)
-
-# Drop-in-deviance test: quadratic vs quadratic + location
-drop_in_dev_3 <- anova(modela2, modela2L, test = "Chisq")
-drop_in_dev_3
-
-# Rate ratios and confidence intervals
-exp(coef(modela2L))
-exp(confint(modela2L))
-```
-
-
-The fitted model incorporating location is expressed as follows:
-
-$$\log(\text{total}) = -0.384 + 0.070 \cdot \text{age} - 0.00070 \cdot \text{age}^2 + 0.061 \cdot \text{IlocosRegion} + 0.054 \cdot \text{MetroManila} + 0.112 \cdot \text{Visayas} - 0.019 \cdot \text{DavaoRegion}$$
-
-The coefficients for age and age$^2$ remained stable in magnitude and
-statistical significance following the inclusion of location, suggesting
-that the quadratic relationship between age and household size is robust
-to the addition of this covariate.
-
-Reading the region coefficients individually:
-
-- **Visayas** ($\hat{\beta} = 0.112$, $p = 0.007$): Households here are 
-  about 11.9% larger than Central Luzon, on average, after controlling 
-  for age, and this difference is statistically significant.
-- **Ilocos Region** ($\hat{\beta} = 0.061$, $p = 0.25$): Slightly larger 
-  than Central Luzon, but not statistically significant — this could 
-  simply be due to random variation.
-- **Metro Manila** ($\hat{\beta} = 0.054$, $p = 0.25$): Similarly slightly 
-  larger than Central Luzon, but also not statistically significant.
-- **Davao Region** ($\hat{\beta} = -0.019$, $p = 0.72$): Slightly smaller 
-  than Central Luzon, but again not statistically significant.
-
-So, when considered individually, only Visayas stands out as truly 
-different from Central Luzon.
-
-When a categorical variable like location creates multiple dummy variables, you can't just look at each one separately and decide if "location matters." You have to test whether location as a whole — all 4 regions together — improves the model. That's exactly what the drop-in-deviance test does.
-
-We compared the model without location to the model with location, and the deviance dropped by 13.14 with a p-value of 0.011 — below 0.05. So even though 3 out of 4 regions weren't individually significant, as a group, location does meaningfully improve the model. Therefore, we 
-reject $H_0$ and conclude that location, as a whole, is a statistically 
-significant predictor of household size after controlling for age, and 
-it is retained in the final model.
-
+### Chapter 4.4.4
+### Chapter 4.4.5
+### Chapter 4.4.6
+### Chapter 4.4.7
 
 
 
