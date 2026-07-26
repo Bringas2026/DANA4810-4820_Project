@@ -1,0 +1,29 @@
+---
+title: "DANA 4820 Project Part 2"
+author: "Team Name Here"
+date: "2026-07-30"
+output:
+  html_document:
+    df_print: paged
+subtitle: Logistic Regression
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Course: DANA 4820**
+
+# Introduction
+
+# The Dataset
+
+
+```{r}
+raw <- read.csv("data/bank.csv", header = TRUE, sep = ";")
+head(raw)
+```
+
+
+
+
