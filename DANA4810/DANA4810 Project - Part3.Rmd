@@ -82,6 +82,16 @@ raw[categorical_cols] <- lapply(raw[categorical_cols], factor)
 heart <- raw
 
 ```
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
 
 ## Exploratory Data Analysis
 
@@ -129,9 +139,63 @@ Because the evaluation relies on a single random split, the test results are hig
 
 ## The idea
 
+Leave-One-Out Cross-Validation (LOOCV) is the most extreme version of
+k-fold cross-validation: for a dataset with $n$ observations, the model
+is fit $n$ separate times. Each time, exactly **one** observation is left
+out to serve as the test, and the model is trained on the
+remaining $n-1$ observations. The single observation is then
+predicted and compared to its true value. After repeating this for every
+observation in the dataset, the $n$ individual error estimates are
+averaged to produce the final LOOCV performance estimate.
+
+Because LOOCV is a special case of k-fold CV where $k = n$, it uses
+almost all of the data for training in every iteration, which tends to
+give a low-bias estimate of model performance. The trade-off is
+computational cost: for our dataset of 297 rows, LOOCV requires fitting
+the linear model 297 separate times, compared to just 1 fit for the
+data split technique in Technique 1.
+```{r}
+
+```
+
 ## Implementation
 
+```{r loocv}
+# Make sure target is numeric (not a factor) so lm can run a regression
+if (is.factor(heart$target)) {
+  heart$target <- ifelse(heart$target == "disease", 1, 0)
+}
+
+# Define the training control: LOOCV
+train.control <- trainControl(method = "LOOCV")
+
+# Train the same model as in Technique 1, but with LOOCV this time
+loocv_model <- train(target ~ ., data = heart, method = "lm",
+                      trControl = train.control)
+
+# Show the R2, RMSE, and MAE
+print(loocv_model)
+```
+
 ## Comment
+
+- $R^2$ ($\approx 0.486$): Indicates that our linear model explains
+  approximately 48.6% of the variance in heart disease presence using
+  the predictors. The remaining variation is likely driven by factors
+  not captured in this dataset.
+- RMSE ($\approx 0.358$) & MAE ($\approx 0.279$): On average, the
+  model's predictions deviate from the true binary outcome ($0$ or $1$)
+  by about $0.279$. The noticeable gap between RMSE and MAE suggests the
+  errors are not uniform across patients, a subset of patients are
+  predicted considerably worse than the "average" patient, which pulls
+  RMSE upward relative to MAE.
+- Because LOOCV averages the error across all 297 individual held-out
+  predictions (every patient gets exactly one turn as the test case),
+  this estimate is not sensitive to how the data happens to be split.
+  This makes the reported $R^2$ and RMSE/MAE a more reliable estimate of
+  how the model would perform on a genuinely new patient than a single
+  train/test split would provide.
+
 
 # Technique 3: k-fold Cross-Validation
 
