@@ -22,6 +22,31 @@ set.seed(2026)
 
 # Introduction
 
+When evaluating predictive models, evaluating performance on the same dataset used for training often leads to overly optimistic performance estimates due to **overfitting**. Cross-validation refers to a set of statistical methods used to assess how accurately a predictive model will perform on new, unseen test data sets. 
+
+The primary goals of cross-validation are:
+
+1. **Model Evaluation:** To obtain a reliable, unbiased estimate of model generalization performance.
+2. **Model Selection:** To compare different modeling approaches or parameter settings to identify the optimal model.
+
+In this project, we explore and compare four major cross-validation techniques using R:
+
+- **Data Split Technique** (the one we covered in class)
+- **Leave-One-Out Cross-Validation (LOOCV)**
+- **$k$-fold Cross-Validation**
+- **Repeated $k$-fold Cross-Validation**
+
+By applying these methods to a practical data set, we aim to document their underlying concepts, demonstrate their implementation in R, and analyze the advantages and drawbacks regarding computational cost, bias, and variance to determine when to use each technique appropriately.
+
+### Model Performance Metrics
+
+To evaluate and compare the predictive accuracy of our models across four different Cross-validation techniques, we utilize three standard continuous performance metrics:
+
+1. **R-Squared ($R^2$):** Represents the squared correlation between the observed outcome values and the predicted values by the model. It ranges from $0$ to $1$ (or $0\%$ to $100\%$). **Higher values indicate a better fit and stronger predictive power, meaning the better the model.**
+2. **Root Mean Squared Error (RMSE):** Measures the average magnitude of the prediction error made by the model in predicting the outcome for an observation, giving higher weight to large errors due to squaring. **Lower values indicate better predictive accuracy, meaning the better the model.**
+3. **Mean Absolute Error (MAE):** An alternative to the RMSE that is less sensitive to outliers. Measures the average absolute difference between predicted and observed values, treating all individual errors equally. **Lower values indicate better predictive accuracy, meaning the better the model.**
+
+
 # The Dataset
 We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/45/heart+disease) (cleveland.csv) to evaluate the four Cross-validation techniques based on the following criteria:
 
@@ -31,7 +56,6 @@ This sample size ($N = 303$) is ideal for evaluating each technique. It is neith
 2. **Reliability of Data Source and Practical Context**<br>
 The UCI Machine Learning Repository is a widely recognized and trusted data source. In addition, predicting the presence of heart disease provides a clear, highly practical medical analytics case study for comparing performance across techniques.
 
-
 ## Data Cleaning Pipeline
 
 ### Step 1: Load the raw data and add column headers
@@ -40,8 +64,7 @@ The UCI Machine Learning Repository is a widely recognized and trusted data sour
 # The file downloaded from UCI has NO header row, so we set header = FALSE
 # and assign the official column names ourselves. We also tell R to treat
 # both "?" and blank cells as missing values (na.strings).
-raw <- read.csv(r"(data/cleveland.csv)", header = FALSE,
-                 na.strings = c("?", ""))
+raw <- read.csv("data/cleveland.csv", header = FALSE, na.strings = c("?", ""))
 
 colnames(raw) <- c("age", "sex", "cp", "trestbps", "chol", "fbs", "restecg",
                     "thalach", "exang", "oldpeak", "slope", "ca", "thal", "num")
@@ -71,29 +94,48 @@ cat("\nRows remaining after removing missing values:", nrow(raw), "\n")
 raw$target <- ifelse(raw$num > 0, 1, 0)
 raw$num <- NULL
 
-# Turn target and sex into labeled factors for readability
+# Turn sex into labeled factors for readability, and keep target as it is
 raw$sex    <- factor(raw$sex,    levels = c(0, 1), labels = c("female", "male"))
-#raw$target <- factor(raw$target, levels = c(0, 1), labels = c("no_disease", "disease"))
+#raw$target <- factor(raw$target, levels = c(0, 1), labels = c("no_disease", "disease")
 
 # Also turn other categorical variables into factors
 categorical_cols <- c("cp", "fbs", "restecg", "exang", "slope", "ca", "thal")
 raw[categorical_cols] <- lapply(raw[categorical_cols], factor)
 
 heart <- raw
-
-```
-```{r}
-```
-
-
-```{r}
-```
-
-
-```{r}
 ```
 
 ## Exploratory Data Analysis
+
+Before fitting predictive models, we examine the data set summary and key distribution characteristics of the variables.
+
+```{r eda-summary}
+# Summary statistics for all variables
+summary(heart)
+
+# Simple barplot for target distribution
+target_counts <- table(heart$target)
+barplot(target_counts, 
+        main = "Distribution of Heart Disease Cases",
+        xlab = "Target Status (0 = No Disease, 1 = Disease)",
+        ylab = "Patient Count",
+        col  = c("lightgreen", "lightpink"))
+
+# List of continuous numerical variables
+num_vars <- c("age", "trestbps", "chol", "thalach", "oldpeak")
+
+# Loop through each numerical variable and plot against target
+par(mfrow = c(2, 3))
+for (var in num_vars) {
+  boxplot(heart[[var]] ~ heart$target,
+          main = paste(var, "by Target"),
+          xlab = "Target Status (0 = No Disease, 1 = Disease)",
+          ylab = var,
+          col  = c("lightgreen", "lightpink"))
+}
+par(mfrow = c(1, 1))
+```
+
 
 # Technique 1: Data Split (Train/Test)
 
@@ -107,14 +149,13 @@ Data Split is the simplest and most commonly used validation technique. The main
 By testing the model on data it has never seen before, this technique helps detect and prevent **overfitting**—a scenario where a model performs exceptionally well on training data but poorly on real-world test data.
 Note that, this technique is only useful when we have a large data set enough to be partitioned. There is a disadvantage that we build a model on a fraction of the dataset only. It may cause a leaving out some important information or leading to higher bias.
 
-
 ## Implementation
 
 ```{r}
 # Split the data into two set: training and test
-training.samples <- raw$target %>% createDataPartition(p = 0.8, list = FALSE)
-train.data <- raw[training.samples, ]
-test.data  <- raw[-training.samples, ]
+training.samples <- heart$target %>% createDataPartition(p = 0.8, list = FALSE)
+train.data <- heart[training.samples, ]
+test.data  <- heart[-training.samples, ]
 
 # Build the model
 model <- lm(target ~., data = train.data)
@@ -132,7 +173,9 @@ data.frame(R2   = R2(predictions, test.data$target),
 
 - RMSE ($\approx 0.423$) & MAE ($\approx 0.326$): On average, the model's predictions deviate from the true binary outcome ($0$ or $1$) by about $0.326$. The higher RMSE relative to MAE suggests the presence of some larger prediction errors on specific test samples.
 
-Because the evaluation relies on a single random split, the test results are highly sensitive to how the data was partitioned (high variance in evaluation performance). This unstability illustrates why more robust techniques, such as $k$-fold or LOOCV, are necessary for moderate-sized datasets.
+Because the evaluation relies on a single random split, the test results are highly sensitive to how the data was partitioned (high variance in evaluation performance with this Data Split technique). This instability illustrates why more robust techniques, such as LOOCV or $k$-fold, are necessary for moderate-sized data sets. We will evaluate them in the next section.
+
+While we fitted a linear regression model (lm) and evaluated its performance using $R^2$, RMSE, and MAE to align with our course curriculum, this approach has inherent limitations when applied to a binary outcome ($0$ or $1$). So a binary target variable would have been converted into a factor and modeled using logistic regression (glm) since a linear regression can produce predicted values outside the valid range of probabilities, such as values less than $0$ or greater than $1$ (e.g., $-0.1$ or $1.25$). Therefore, in addition to continuous error metrics like RMSE, incorporating classification metrics, such as Accuracy (by applying a $0.5$ threshold to convert continuous predictions into binary outcomes $0$ or $1$), might provide a more comprehensive and practically meaningful comparison of the models.
 
 
 # Technique 2: Leave-One-Out Cross-Validation (LOOCV)
@@ -140,7 +183,7 @@ Because the evaluation relies on a single random split, the test results are hig
 ## The idea
 
 Leave-One-Out Cross-Validation (LOOCV) is the most extreme version of
-k-fold cross-validation: for a dataset with $n$ observations, the model
+k-fold cross-validation: for a data set with $n$ observations, the model
 is fit $n$ separate times. Each time, exactly **one** observation is left
 out to serve as the test, and the model is trained on the
 remaining $n-1$ observations. The single observation is then
@@ -151,12 +194,9 @@ averaged to produce the final LOOCV performance estimate.
 Because LOOCV is a special case of k-fold CV where $k = n$, it uses
 almost all of the data for training in every iteration, which tends to
 give a low-bias estimate of model performance. The trade-off is
-computational cost: for our dataset of 297 rows, LOOCV requires fitting
+computational cost: for our data set of 297 rows, LOOCV requires fitting
 the linear model 297 separate times, compared to just 1 fit for the
 data split technique in Technique 1.
-```{r}
-
-```
 
 ## Implementation
 
@@ -213,4 +253,10 @@ print(loocv_model)
 
 ## Comment
 
+
+# References
+
+Janosi A, Steinbrunn W, Pfisterer M, Detrano R. Heart Disease [dataset]. 1989. UCI Machine Learning Repository. Available from: https://doi.org/10.24432/C52P4X.
+
+Cross-Validation in R: Validation Set, LOOCV & k-Fold with tidymodels. Modified July 7, 2026. Datanovia. Available from: https://www.datanovia.com/learn/machine-learning/model-validation/cross-validation
 
