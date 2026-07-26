@@ -152,7 +152,8 @@ Because LOOCV is a special case of k-fold CV where $k = n$, it uses
 almost all of the data for training in every iteration, which tends to
 give a low-bias estimate of model performance. The trade-off is
 computational cost: for our dataset of 297 rows, LOOCV requires fitting
-the linear model 297 separate times.
+the linear model 297 separate times, compared to just 1 fit for the
+data split technique in Technique 1.
 ```{r}
 
 ```
