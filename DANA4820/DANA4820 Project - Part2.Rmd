@@ -1,11 +1,11 @@
 ---
-title: "DANA 4820 Project Part 2"
+title: "DANA 4820 Project Part 2 - Logistic Regression"
 author: "Team Name Here"
 date: "2026-07-30"
 output:
   html_document:
     df_print: paged
-subtitle: Logistic Regression
+subtitle: How to make use of the reticulate R package to run BOTH Python and R code in a single .rmd file?
 ---
 
 ```{r setup, include=FALSE}
@@ -24,6 +24,49 @@ raw <- read.csv("data/bank.csv", header = TRUE, sep = ";")
 head(raw)
 ```
 
+
+# (a) How to fit both grouped and ungrouped datasets?
+### You should interpret one or more of the coefficients.
+## Description
+
+## Implementation
+
+
+# (b) Is there a way to perform a drop-in-devianve test for R and Python?
+### Make sure you explain the purpose of a drop-in-deviance test in logistic regression. You may use a simple example but make sure your models are nested.
+## Description
+
+## Implementation
+
+
+# (c) How do you perform a goodness-of-fit test for grouped data using deviance?
+### Note that you will learn in class that you cannot use the same approach (using deviance) for ungrouped data. For ungrouped data, you will learn that the correct approach is to use a Hosmer-Lemeshow (goodness-of-fit) test.
+## Description
+
+## Implementation
+
+
+# (d) How to perform a Hosmer-Lemeshow test in R and Python?
+## Description
+
+## Implementation
+
+
+# (e) How is classification table (confusion matrix) used in logistic regression?
+### How to create one in R and Python - with the purpose of finding sensitivity, specificity and positive predictive value (you are to provide examples).
+## Description
+
+## Implementation
+
+
+# (f) What is the role ROC curve/AUC in logistic regression?
+### How to create such a curve in R and Python.
+## Description
+
+## Implementation
+
+
+# Conclusion / Summary
 
 
 
