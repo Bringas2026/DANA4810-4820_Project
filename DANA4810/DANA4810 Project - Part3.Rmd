@@ -442,8 +442,22 @@ Here is how the four cross-validation techniques compare along the bias-variance
 
 ## Practical decision guide
 
-Based on both the theory and what we observed on this dataset:
+Based on both the theory and what we observed on this dataset, the choice
+of technique comes down to three practical questions:
 
+1. How much data do you have?
+2. How expensive is the model to train?
+3. How precise does the performance estimate need to be?
+
+**Our recommendation for this dataset:** given its moderate size (297
+rows) and the low cost of fitting a linear model, **Repeated 10-fold CV**
+is the most appropriate choice for reporting a final performance
+estimate — it uses nearly all the data for training in every fit (like
+$k$-fold and LOOCV), avoids LOOCV's correlated-model variance issue, and
+gives the most stable estimate of the four techniques at a computational
+cost (50 fits) that remains trivial for this model. Plain 10-fold CV
+remains a reasonable and much faster alternative if only a single,
+"good enough" estimate is needed rather than the most precise one.
 
 # References
 
