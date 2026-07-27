@@ -311,6 +311,12 @@ observed on the Cleveland Heart Disease dataset.
 
 ## Dataset size matters most
 
+- With the **Data Split** technique, holding out 20% for testing left
+  only about 59 patients in the test set. A test set this small means a
+  single unlucky (or lucky) split can swing $R^2$ and RMSE noticeably --
+  which is consistent with what we found: Data Split gave the lowest
+  $R^2$ ($\approx 0.370$) of the four techniques, and this number would
+  likely shift if a different random seed were used.
 - **LOOCV**, **$k$-fold CV**, and **Repeated $k$-fold CV** all use
   nearly all of the data for training in every iteration, which is why
   they gave higher and more consistent estimates
@@ -321,6 +327,20 @@ observed on the Cleveland Heart Disease dataset.
 - With only 297 rows split into 10 folds, each fold contains roughly 30
   patients -- small enough that *which* specific patients land in which
   fold can still shift a single $k$-fold run's result somewhat.
+  **Repeated $k$-fold CV** addresses exactly this by re-shuffling the
+  folds and re-running $k$-fold 5 times (50 total fits), averaging out
+  that remaining randomness. We can see this directly in our results:
+  the standard error of the RMSE estimate dropped from **0.0088** with a
+  single 10-fold run to **0.0065** with the repeated version, a
+  roughly 26% reduction in the uncertainty of our performance estimate,
+  achieved simply by repeating the same procedure on different random
+  fold partitions. This matters less as dataset size grows, since larger
+  folds are less sensitive to which specific observations they contain.
+
+**Rule of thumb:** the smaller the dataset, the more a single data split
+should be avoided in favor of LOOCV, $k$-fold, or repeated $k$-fold CV --
+and the more repetitions of $k$-fold are worth their extra computational
+cost.
 
 ## Computational Cost
 
