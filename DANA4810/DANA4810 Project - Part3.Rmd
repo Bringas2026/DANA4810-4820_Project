@@ -1,13 +1,23 @@
 ---
 title: "Cross-Validation Techniques: A Comparative Study"
+subtitle: Using the Cleveland Heart Disease Dataset
 author: "Team Names Here"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   html_document:
-    df_print: paged
-  pdf_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
     number_sections: true
-subtitle: Using the Cleveland Heart Disease Dataset
+    theme: flatly
+    highlight: tango
+    df_print: paged
+    code_folding: show
+  pdf_document:
+    toc: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
