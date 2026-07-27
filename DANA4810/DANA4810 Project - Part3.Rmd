@@ -3,10 +3,6 @@ title: "Cross-Validation Techniques: A Comparative Study"
 author: "Team Names Here"
 date: "2026-07-27"
 output:
-  pdf_document:
-    toc: true
-    number_sections: true
-    latex_engine: xelatex
   html_document:
     toc: true
     toc_float:
@@ -18,6 +14,10 @@ output:
     highlight: tango
     df_print: paged
     code_folding: show
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
 subtitle: Using the Cleveland Heart Disease Dataset
 ---
 
@@ -378,6 +378,25 @@ scaled back (fewer repeats, or a smaller $k$), while a single Data Split
 would remain the cheapest option by far.
 
 ## Bias vs. variance trade-off
+
+Understanding the bias-variance trade-off is critical when selecting a model evaluation technique, as each method strikes a different balance between these two sources of error:
+
+- **Bias:** Refers to the error introduced by approximating a real-world problem with a simplified model. High bias can cause a validation technique to under- or overestimate model performance systematically (e.g., training on too little data).
+- **Variance:** Refers to the variability or sensitivity of the performance estimate when fitted on different random subsets or samples of the same dataset. High variance means the performance metric fluctuates significantly depending on how the data happens to be partitioned.
+
+Here is how the four cross-validation techniques compare along the bias-variance spectrum:
+
+1. **Data Split (High Variance, Potential High Bias):**
+   Holding out 20% of our moderate-sized dataset ($N = 297$) for testing left only about 59 observations in the test set. Because the model was trained on only 80% of the available data, it suffers from **higher bias** (pessimistic evaluation), resulting in a lower $R^2$ ($\approx 0.370$) compared to the other methods. Furthermore, it suffers from **high variance** because the single test evaluation depends heavily on which specific 59 observations ended up in the test set.
+
+2. **LOOCV (Low Bias, High Variance):**
+   Because LOOCV trains the model on $n - 1$ (296) observations in every iteration, it utilizes nearly $100\%$ of the data, resulting in **virtually unbiased** performance estimates ($R^2 \approx 0.504$). However, because each of the 297 trained models uses an almost identical subset of the data (differing by only a single observation), the outputs across iterations are highly correlated. Averaging outputs from highly correlated models can lead to **higher variance** in the estimated test error across different samples of data.
+
+3. **$k$-fold Cross-Validation (Balanced Bias and Variance):**
+   $k$-fold CV ($k = 10$) strikes an optimal balance. By training on 90% of the data in each iteration, the bias remains very low—nearly as low as LOOCV. At the same time, because the training sets across folds overlap less than in LOOCV, the validation estimates are less correlated, significantly reducing the variance. On our dataset, 10-fold CV yielded a stable $R^2 \approx 0.499$ and RMSE $\approx 0.352$.
+
+4. **Repeated $k$-fold Cross-Validation (Lowest Variance):**
+   While plain $k$-fold CV balances bias and variance well, a single run on a small/moderate dataset can still be influenced by how observations happen to be partitioned across the $k$ folds. Repeating 10-fold CV 5 times (50 total resamples) does not change the level of bias, but it **further stabilizes and reduces the evaluation variance** of the performance estimate. Across the 50 resamples, our model demonstrated consistent stability with a low standard deviation in RMSE ($\text{SD} \approx 0.0463$) and $R^2$ ($\text{SD} \approx 0.1186$), offering the most reliable and robust assessment of model generalization.
 
 ## Practical decision guide
 
