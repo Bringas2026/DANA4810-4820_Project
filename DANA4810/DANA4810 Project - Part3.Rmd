@@ -151,7 +151,7 @@ Note that, this technique is only useful when we have a large data set enough to
 
 ## Implementation
 
-```{r}
+```{r single split}
 # Split the data into two set: training and test
 training.samples <- heart$target %>% createDataPartition(p = 0.8, list = FALSE)
 train.data <- heart[training.samples, ]
@@ -282,7 +282,10 @@ Repeated k-fold CV addresses this remaining source of variance by running the en
 
 Repeating the process does not reduce bias any further compared to plain k-fold (bias is governed by k, i.e., how much data is used for training in each fold), but it does reduce the variance of the performance estimate, since we are no longer relying on the luck of one particular fold assignment. The trade-off is computational cost: as shown in the cost table below, repeating 10-fold CV 5 times requires 50 model fits instead of just 10.
 
+
 ## Implementation
+
+```{r repeated k-fold}
 # Define the training control: 10-fold CV repeated 5 times
 train.control.repeated <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
@@ -298,6 +301,7 @@ print(repeated_cv_model)
 # against the single 10-fold run's variability in Technique 3
 repeated_cv_model$resample %>%
   summarise(sd_RMSE = sd(RMSE), sd_Rsquared = sd(Rsquared))
+```
 
 ## Comment
 
