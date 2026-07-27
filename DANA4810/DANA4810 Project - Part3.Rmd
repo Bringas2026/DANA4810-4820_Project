@@ -276,7 +276,28 @@ print(kfold_model)
 
 ## The idea
 
+Repeated k-fold Cross-Validation builds directly on Technique 3. Plain k-fold CV already averages performance over k folds instead of relying on a single train/test split, but with a moderate dataset like ours (only 297 rows split into 10 folds of roughly 30 patients each), which specific patients happen to land in which fold can still nudge a single k-fold run's result up or down somewhat.
+
+Repeated k-fold CV addresses this remaining source of variance by running the entire k-fold procedure multiple times, each time with a completely new random partition of the data into folds, and then averaging the results across all repeats. For example, "10-fold CV repeated 5 times" means we perform 5 independent 10-fold CV runs (50 total model fits in total) and average the 5 resulting performance estimates together.
+
+Repeating the process does not reduce bias any further compared to plain k-fold (bias is governed by k, i.e., how much data is used for training in each fold), but it does reduce the variance of the performance estimate, since we are no longer relying on the luck of one particular fold assignment. The trade-off is computational cost: as shown in the cost table below, repeating 10-fold CV 5 times requires 50 model fits instead of just 10.
+
 ## Implementation
+# Define the training control: 10-fold CV repeated 5 times
+train.control.repeated <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+
+# Train the same linear model, but using repeated 10-fold CV this time
+set.seed(2026) # Set seed for reproducibility of the random folds across all 5 repeats
+repeated_cv_model <- train(target ~ ., data = heart, method = "lm",
+                           trControl = train.control.repeated)
+
+# Show the R2, RMSE, and MAE
+print(repeated_cv_model)
+
+# Look at the spread across all 50 individual resamples, to compare
+# against the single 10-fold run's variability in Technique 3
+repeated_cv_model$resample %>%
+  summarise(sd_RMSE = sd(RMSE), sd_Rsquared = sd(Rsquared))
 
 ## Comment
 
