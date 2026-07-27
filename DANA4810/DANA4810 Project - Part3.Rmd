@@ -3,11 +3,6 @@ title: "Cross-Validation Techniques: A Comparative Study"
 author: "Nandini Bhatia, Diego Alberto, Khushpreet Kaur, Haruka Sawakami"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  word_document: default
-  pdf_document:
-    toc: true
-    number_sections: true
-    latex_engine: xelatex
   html_document:
     toc: true
     toc_float:
@@ -19,6 +14,11 @@ output:
     highlight: tango
     df_print: paged
     code_folding: show
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+  word_document: default
 subtitle: Using the Cleveland Heart Disease Dataset
 ---
 
@@ -185,7 +185,7 @@ data.frame(R2   = R2(predictions, test.data$target),
 
 - RMSE ($\approx 0.423$) & MAE ($\approx 0.326$): On average, the model's predictions deviate from the true binary outcome ($0$ or $1$) by about $0.326$. The higher RMSE relative to MAE suggests the presence of some larger prediction errors on specific test samples.
 
-Because the evaluation relies on a single random split, the test results are highly sensitive to how the data was partitioned (high variance in evaluation performance with this Data Split technique). This instability illustrates why more robust techniques, such as LOOCV or $k$-fold, are necessary for moderate-sized data sets. We will evaluate them in the next section.
+- Because the evaluation relies on a single random split, the test results are highly sensitive to how the data was partitioned (high variance in evaluation performance with this Data Split technique). This instability illustrates why more robust techniques, such as LOOCV or $k$-fold, are necessary for moderate-sized data sets. We will evaluate them in the next section.
 
 While we fitted a linear regression model (lm) and evaluated its performance using $R^2$, RMSE, and MAE to align with our course curriculum, this approach has inherent limitations when applied to a binary outcome ($0$ or $1$). So a binary target variable would have been converted into a factor and modeled using logistic regression (glm) since a linear regression can produce predicted values outside the valid range of probabilities, such as values less than $0$ or greater than $1$ (e.g., $-0.1$ or $1.25$). Therefore, in addition to continuous error metrics like RMSE, incorporating classification metrics, such as Accuracy (by applying a $0.5$ threshold to convert continuous predictions into binary outcomes $0$ or $1$), might provide a more comprehensive and practically meaningful comparison of the models.
 
@@ -281,11 +281,11 @@ print(kfold_model)
 
 ## Comment
 
-1. $R^2$ ($\approx 0.499$): Indicates that our linear model explains approximately 49.9% of the variance in the presence of heart disease. Interestingly, this $R^2$ is slightly higher than both the single Data Split (≈0.370) and LOOCV (≈0.504), suggesting that averaging across 10 random folds provided a highly stable estimate of the model's true predictive capability.
+- $R^2$ ($\approx 0.499$): Indicates that our linear model explains approximately 49.9% of the variance in the presence of heart disease. Interestingly, this $R^2$ is slightly higher than both the single Data Split (≈0.370) and LOOCV (≈0.504), suggesting that averaging across 10 random folds provided a highly stable estimate of the model's true predictive capability.
 
-2. RMSE ($\approx 0.352$) & MAE ($\approx 0.272$): On average, the model's predictions deviate by about 0.272. Both of these error metrics are slightly lower (better) than those seen in the Data Split and LOOCV techniques.
+- RMSE ($\approx 0.352$) & MAE ($\approx 0.272$): On average, the model's predictions deviate by about 0.272. Both of these error metrics are slightly lower (better) than those seen in the Data Split and LOOCV techniques.
 
-3. Bias-Variance Trade-off: 10-fold CV strikes an excellent balance. It avoids the high variance associated with a single train/test split (because performance is averaged over 10 tests), and it largely avoids the high variance sometimes associated with LOOCV (since training sets in LOOCV are nearly identical to each other, their error estimates can be highly correlated). Furthermore, it is significantly faster to compute, making k-fold CV the industry standard for most practical machine learning workflows.
+- Bias-Variance Trade-off: 10-fold CV strikes an excellent balance. It avoids the high variance associated with a single train/test split (because performance is averaged over 10 tests), and it largely avoids the high variance sometimes associated with LOOCV (since training sets in LOOCV are nearly identical to each other, their error estimates can be highly correlated). Furthermore, it is significantly faster to compute, making k-fold CV the industry standard for most practical machine learning workflows.
 
 # Technique 4: Repeated k-fold Cross-Validation
 
@@ -299,7 +299,6 @@ Repeating the process does not reduce bias any further compared to plain k-fold 
 
 
 ## Implementation
-
 
 ```{r repeated k-fold}
 # Define the training control: 10-fold CV repeated 5 times
@@ -323,7 +322,7 @@ repeated_cv_model$resample %>%
 
 ## Comment
 
-1. $R^2$ ($\approx 0.512$): Indicates that our linear model explains
+- $R^2$ ($\approx 0.512$): Indicates that our linear model explains
    approximately 51.2% of the variance in heart disease presence, averaged
    over all 5 repeats of 10-fold CV. This is modestly higher than both the
    single 10-fold estimate from Technique 3 ($R^2 \approx 0.499$) and LOOCV
@@ -331,14 +330,14 @@ repeated_cv_model$resample %>%
    more stable read on the model's true predictive capability rather than
    any one lucky/unlucky fold assignment.
 
-2. RMSE ($\approx 0.353$) & MAE ($\approx 0.275$): On average, the model's
+- RMSE ($\approx 0.353$) & MAE ($\approx 0.275$): On average, the model's
    predictions deviate from the true binary outcome ($0$ or $1$) by about
    0.275. These are very close to the single 10-fold and LOOCV results,
    which makes sense: repeating $k$-fold does not change how much data each
    fold trains on, so it doesn't systematically shift RMSE or MAE up or
    down -- it only changes how precisely we've estimated them.
 
-3. Stability of the estimate: the raw spread across individual fold scores
+- Stability of the estimate: the raw spread across individual fold scores
    (`sd_RMSE`) was actually higher here (0.0463 across the 50 resamples)
    than in the single 10-fold run (0.0277 across 10 resamples) -- pooling
    fold scores from 5 different random partitions naturally shows more
