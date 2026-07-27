@@ -1,12 +1,13 @@
 ---
 title: "Cross-Validation Techniques: A Comparative Study"
-author: "Team Names Here"
+author: "Nandini Bhatia, Diego Alberto, Khushpreet Kaur, Haruka Sawakami"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
-  html_document:
-    df_print: paged
+  word_document: default
   pdf_document:
     number_sections: true
+  html_document:
+    df_print: paged
 subtitle: Using the Cleveland Heart Disease Dataset
 ---
 
@@ -260,6 +261,9 @@ train.control.kfold <- trainControl(method = "cv", number = 10)
 set.seed(2026) # Set seed for reproducibility of the random folds
 kfold_model <- train(target ~ ., data = heart, method = "lm",
                      trControl = train.control.kfold)
+
+kfold_model$resample %>% summarise(sd_RMSE = sd(RMSE), sd_Rsquared = sd(Rsquared))
+
 # Show the R2, RMSE, and MAE
 print(kfold_model)
 ```
@@ -283,6 +287,8 @@ Repeated k-fold CV addresses this remaining source of variance by running the en
 Repeating the process does not reduce bias any further compared to plain k-fold (bias is governed by k, i.e., how much data is used for training in each fold), but it does reduce the variance of the performance estimate, since we are no longer relying on the luck of one particular fold assignment. The trade-off is computational cost: as shown in the cost table below, repeating 10-fold CV 5 times requires 50 model fits instead of just 10.
 
 ## Implementation
+
+```{r repeated-cv}
 # Define the training control: 10-fold CV repeated 5 times
 train.control.repeated <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
@@ -294,12 +300,43 @@ repeated_cv_model <- train(target ~ ., data = heart, method = "lm",
 # Show the R2, RMSE, and MAE
 print(repeated_cv_model)
 
+
+
 # Look at the spread across all 50 individual resamples, to compare
 # against the single 10-fold run's variability in Technique 3
 repeated_cv_model$resample %>%
   summarise(sd_RMSE = sd(RMSE), sd_Rsquared = sd(Rsquared))
+```
 
 ## Comment
+
+1. $R^2$ ($\approx 0.512$): Indicates that our linear model explains
+   approximately 51.2% of the variance in heart disease presence, averaged
+   over all 5 repeats of 10-fold CV. This is modestly higher than both the
+   single 10-fold estimate from Technique 3 ($R^2 \approx 0.499$) and LOOCV
+   ($R^2 \approx 0.504$), consistent with repeating the procedure giving a
+   more stable read on the model's true predictive capability rather than
+   any one lucky/unlucky fold assignment.
+
+2. RMSE ($\approx 0.353$) & MAE ($\approx 0.275$): On average, the model's
+   predictions deviate from the true binary outcome ($0$ or $1$) by about
+   0.275. These are very close to the single 10-fold and LOOCV results,
+   which makes sense: repeating $k$-fold does not change how much data each
+   fold trains on, so it doesn't systematically shift RMSE or MAE up or
+   down -- it only changes how precisely we've estimated them.
+
+3. Stability of the estimate: the raw spread across individual fold scores
+   (`sd_RMSE`) was actually higher here (0.0463 across the 50 resamples)
+   than in the single 10-fold run (0.0277 across 10 resamples) -- pooling
+   fold scores from 5 different random partitions naturally shows more
+   raw variety than one partition does. But what determines how precisely
+   we know the *average* RMSE is the standard error of that mean
+   ($\text{sd} / \sqrt{n_{\text{resamples}}}$), and this is where repeating
+   pays off: the standard error dropped from
+   $0.0277 / \sqrt{10} \approx 0.0088$ for the single 10-fold run to
+   $0.0463 / \sqrt{50} \approx 0.0065$ for the repeated version -- roughly
+   a 26% tightening of our estimate, achieved purely by re-shuffling the
+   folds and re-running the same 10-fold procedure 5 times.
 
 # When to Use Which Technique
 
@@ -350,9 +387,9 @@ though our dataset is small enough that all four ran quickly:
 | Technique  | Model fits required (n = 297, k = 10, repeats = 5) |
 |------------|:---------------------------------------------------:|
 | Data Split | 1                                                     |
+| LOOCV      | 297                                                    |
 | $k$-fold CV (k=10) | 10                                            |
 | Repeated $k$-fold CV | 50                                          |
-| LOOCV      | 297                                                    |
 
 For a simple linear model like ours, fitting the model up to 297 times
 is still fast (all four techniques ran in well under a second combined).
@@ -363,6 +400,14 @@ scaled back (fewer repeats, or a smaller $k$), while a single Data Split
 would remain the cheapest option by far.
 
 ## Bias vs. variance trade-off
+
+**Data Split -- high bias, high variance.** We only train on 80% of the patients, so the model has less to learn from than it would with the full dataset — that alone makes it a slightly weaker model. But the bigger issue is that our whole judgment of "how good is this model" rests on a single 80/20 split. If we happened to shuffle the data differently before splitting, we could easily get a noticeably different-looking result, just from luck of the draw. Our numbers back this up: Data Split gave the lowest R² (≈0.370) of the four methods, which fits a technique that's working with less data and less certainty at the same time.
+
+**LOOCV -- lowest bias, but not variance-free.** Since each model is trained on 296 out of 297 patients, it's basically seeing the full dataset every single time — so there's almost no bias from "not enough training data." But here's the catch: because each of those 297 training sets is nearly identical to the next (they only differ by which one patient got left out), the 297 models end up very similar to each other too, and their mistakes tend to repeat rather than cancel out. So even though LOOCV looks unbeatable on paper (lowest bias), averaging 297 very similar models doesn't give you as much of a stability boost as you might expect.
+
+**$k$-fold CV ($k=10$) -- a tunable middle ground.** Each fold trains on 90% of the data, so it gives up a little bit compared to LOOCV's near-100%, but not much. What it gains in return is meaningfully less correlated training sets from one fold to the next — since each fold's 90% is more different from the other folds than LOOCV's "leave out just one patient" setup is. That means the 10 estimates are more independent of each other, so averaging them actually buys real stability, and it's much cheaper to compute. That's the whole reason k-fold is the go-to default in practice: you give up a little bias, but you get a genuinely more reliable and much faster estimate.
+
+**Repeated $k$-fold -- same bias as $k$-fold, lower variance.** This is the cleanest example of the two ideas actually splitting apart. Every single fold in the repeated version is still trained on 90% of the data, same as plain k-fold — so nothing changes about the model itself, and indeed our R², RMSE, and MAE barely moved between the two. What changes is how confident we can be in that number: because we reran the whole process 5 times with different random fold assignments instead of just once, we're no longer trusting the outcome of a single lucky (or unlucky) shuffle. That extra confidence shows up directly in our results — the uncertainty around our RMSE estimate shrank by about 26% (from ≈0.0088 to ≈0.0065) — for the cost of running 50 fits instead of 10.
 
 ## Practical decision guide
 
