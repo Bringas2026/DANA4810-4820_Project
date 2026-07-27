@@ -280,7 +280,7 @@ print(kfold_model)
 
 ## Comment
 
-# Discussion: When to Use Which Technique
+# When to Use Which Technique
 
 Beyond simply implementing each technique, it is important to understand
 *when* each one is the right tool for the job. This section reflects on
@@ -289,6 +289,37 @@ $k$-fold CV, using both the theory behind them and what we actually
 observed on the Cleveland Heart Disease dataset.
 
 ## Dataset size matters most
+
+- **LOOCV**, **$k$-fold CV**, and **Repeated $k$-fold CV** all use
+  nearly all of the data for training in every iteration, which is why
+  they gave higher and more consistent estimates
+  ($R^2 \approx 0.504$, $0.498$, and $0.512$ respectively). For a
+  dataset much larger than ours (tens of thousands of rows), a single
+  data split would be far less risky, since even a 20% test set would
+  still contain thousands of observations.
+- With only 297 rows split into 10 folds, each fold contains roughly 30
+  patients -- small enough that *which* specific patients land in which
+  fold can still shift a single $k$-fold run's result somewhat.
+
+## Computational Cost
+
+This is where the four techniques differ the most in practice, even
+though our dataset is small enough that all four ran quickly:
+
+| Technique  | Model fits required (n = 297, k = 10, repeats = 5) |
+|------------|:---------------------------------------------------:|
+| Data Split | 1                                                     |
+| $k$-fold CV (k=10) | 10                                            |
+| Repeated $k$-fold CV | 50                                          |
+| LOOCV      | 297                                                    |
+
+For a simple linear model like ours, fitting the model up to 297 times
+is still fast (all four techniques ran in well under a second combined).
+But if the model were more expensive to train (e.g., a random forest
+with many trees, or a neural network), LOOCV's cost would become a real
+constraint, and even repeated $k$-fold's 50 fits would need to be
+scaled back (fewer repeats, or a smaller $k$), while a single Data Split
+would remain the cheapest option by far.
 
 ## Bias vs. variance trade-off
 
