@@ -3,11 +3,14 @@ title: "Cross-Validation Techniques: A Comparative Study"
 author: "Nandini Bhatia, Diego Alberto, Khushpreet Kaur, Haruka Sawakami"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
+<<<<<<< HEAD
   word_document: default
   pdf_document:
     toc: true
     number_sections: true
     latex_engine: xelatex
+=======
+>>>>>>> 89d8cb647bd5d5a4ac2dd11bbe74c33dc15bed67
   html_document:
     toc: true
     toc_float:
@@ -19,6 +22,10 @@ output:
     highlight: tango
     df_print: paged
     code_folding: show
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
 subtitle: Using the Cleveland Heart Disease Dataset
 ---
 
@@ -414,13 +421,24 @@ would remain the cheapest option by far.
 
 ## Bias vs. variance trade-off
 
-**Data Split -- high bias, high variance.** We only train on 80% of the patients, so the model has less to learn from than it would with the full dataset — that alone makes it a slightly weaker model. But the bigger issue is that our whole judgment of "how good is this model" rests on a single 80/20 split. If we happened to shuffle the data differently before splitting, we could easily get a noticeably different-looking result, just from luck of the draw. Our numbers back this up: Data Split gave the lowest R² (≈0.370) of the four methods, which fits a technique that's working with less data and less certainty at the same time.
+Understanding the bias-variance trade-off is critical when selecting a model evaluation technique, as each method strikes a different balance between these two sources of error:
 
-**LOOCV -- lowest bias, but not variance-free.** Since each model is trained on 296 out of 297 patients, it's basically seeing the full dataset every single time — so there's almost no bias from "not enough training data." But here's the catch: because each of those 297 training sets is nearly identical to the next (they only differ by which one patient got left out), the 297 models end up very similar to each other too, and their mistakes tend to repeat rather than cancel out. So even though LOOCV looks unbeatable on paper (lowest bias), averaging 297 very similar models doesn't give you as much of a stability boost as you might expect.
+- **Bias:** Refers to the error introduced by approximating a real-world problem with a simplified model. High bias can cause a validation technique to under- or overestimate model performance systematically (e.g., training on too little data).
+- **Variance:** Refers to the variability or sensitivity of the performance estimate when fitted on different random subsets or samples of the same dataset. High variance means the performance metric fluctuates significantly depending on how the data happens to be partitioned.
 
-**$k$-fold CV ($k=10$) -- a tunable middle ground.** Each fold trains on 90% of the data, so it gives up a little bit compared to LOOCV's near-100%, but not much. What it gains in return is meaningfully less correlated training sets from one fold to the next — since each fold's 90% is more different from the other folds than LOOCV's "leave out just one patient" setup is. That means the 10 estimates are more independent of each other, so averaging them actually buys real stability, and it's much cheaper to compute. That's the whole reason k-fold is the go-to default in practice: you give up a little bias, but you get a genuinely more reliable and much faster estimate.
+Here is how the four cross-validation techniques compare along the bias-variance spectrum:
 
-**Repeated $k$-fold -- same bias as $k$-fold, lower variance.** This is the cleanest example of the two ideas actually splitting apart. Every single fold in the repeated version is still trained on 90% of the data, same as plain k-fold — so nothing changes about the model itself, and indeed our R², RMSE, and MAE barely moved between the two. What changes is how confident we can be in that number: because we reran the whole process 5 times with different random fold assignments instead of just once, we're no longer trusting the outcome of a single lucky (or unlucky) shuffle. That extra confidence shows up directly in our results — the uncertainty around our RMSE estimate shrank by about 26% (from ≈0.0088 to ≈0.0065) — for the cost of running 50 fits instead of 10.
+1. **Data Split (High Variance, Potential High Bias):**
+   Holding out 20% of our moderate-sized dataset ($N = 297$) for testing left only about 59 observations in the test set. Because the model was trained on only 80% of the available data, it suffers from **higher bias** (pessimistic evaluation), resulting in a lower $R^2$ ($\approx 0.370$) compared to the other methods. Furthermore, it suffers from **high variance** because the single test evaluation depends heavily on which specific 59 observations ended up in the test set.
+
+2. **LOOCV (Low Bias, High Variance):**
+   Because LOOCV trains the model on $n - 1$ (296) observations in every iteration, it utilizes nearly $100\%$ of the data, resulting in **virtually unbiased** performance estimates ($R^2 \approx 0.504$). However, because each of the 297 trained models uses an almost identical subset of the data (differing by only a single observation), the outputs across iterations are highly correlated. Averaging outputs from highly correlated models can lead to **higher variance** in the estimated test error across different samples of data.
+
+3. **$k$-fold Cross-Validation (Balanced Bias and Variance):**
+   $k$-fold CV ($k = 10$) strikes an optimal balance. By training on 90% of the data in each iteration, the bias remains very low—nearly as low as LOOCV. At the same time, because the training sets across folds overlap less than in LOOCV, the validation estimates are less correlated, significantly reducing the variance. On our dataset, 10-fold CV yielded a stable $R^2 \approx 0.499$ and RMSE $\approx 0.352$.
+
+4. **Repeated $k$-fold Cross-Validation (Lowest Variance of the Estimate):**
+   While plain $k$-fold CV balances bias and variance well, a single run on a small/moderate dataset can still be influenced by how observations happen to be partitioned across the $k$ folds. Repeating 10-fold CV 5 times (50 total resamples) does not change the level of bias — training still uses 90% of the data each fold, exactly as in plain $k$-fold. What it changes is how precisely we know the *average* performance: the raw spread across individual fold scores (sd_RMSE $\approx 0.0463$ over 50 resamples) is naturally larger than the single 10-fold run's (sd_RMSE $\approx 0.0277$ over 10 resamples), simply because it pools scores from 5 different random partitions rather than one. But the standard error of the mean RMSE — sd divided by $\sqrt{n_{\text{resamples}}}$ — dropped from $\approx 0.0088$ (single run) to $\approx 0.0065$ (repeated), a roughly 26% tightening of our estimate. This is the correct sense in which repeated $k$-fold offers the most reliable assessment: not a lower raw spread, but a more precise estimate of the same underlying bias.
 
 ## Practical decision guide
 
