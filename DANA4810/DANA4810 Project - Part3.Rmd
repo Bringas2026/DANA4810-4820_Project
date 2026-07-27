@@ -240,10 +240,38 @@ print(loocv_model)
 # Technique 3: k-fold Cross-Validation
 
 ## The idea
+$k$-fold Cross-Validation represents a highly effective middle ground between the simple Data Split and the computationally expensive LOOCV. The main idea is to randomly divide the dataset into $k$ roughly equal-sized groups, or "folds" (typically, $k = 5$ or $k = 10$). 
+
+The model training and evaluation process is then repeated exactly $k$ times. In each iteration:
+
+- **One fold** is held out and treated as the test set.
+
+- The **remaining $k-1$ folds** are combined and used as the training set to fit the model.
+
+- The model's performance is calculated on the single held-out fold.
+
+This process ensures that every single observation in the dataset gets to be in the test set exactly once. The final performance metrics are obtained by averaging the $k$ individual error estimates. $k$-fold CV is far less computationally intensive than LOOCV (requiring only $k$ fits instead of $n$ fits) while still producing a much more stable and reliable estimate of model performance than a single Data Split, successfully balancing the bias-variance trade-off.
 
 ## Implementation
 
+```{r k-fold}
+# Define the training control: 10-fold Cross-Validation
+train.control.kfold <- trainControl(method = "cv", number = 10)
+# Train the same linear model, but using 10-fold CV this time
+set.seed(2026) # Set seed for reproducibility of the random folds
+kfold_model <- train(target ~ ., data = heart, method = "lm",
+                     trControl = train.control.kfold)
+# Show the R2, RMSE, and MAE
+print(kfold_model)
+```
+
 ## Comment
+
+1. $R^2$ ($\approx 0.498$): Indicates that our linear model explains approximately 49.8% of the variance in the presence of heart disease. Interestingly, this $R^2$ is slightly higher than both the single Data Split (≈0.370) and LOOCV (≈0.486), suggesting that averaging across 10 random folds provided a highly stable estimate of the model's true predictive capability.
+
+2. RMSE ($\approx 0.352$) & MAE ($\approx 0.271$): On average, the model's predictions deviate by about 0.272. Both of these error metrics are slightly lower (better) than those seen in the Data Split and LOOCV techniques.
+
+3. Bias-Variance Trade-off: 10-fold CV strikes an excellent balance. It avoids the high variance associated with a single train/test split (because performance is averaged over 10 tests), and it largely avoids the high variance sometimes associated with LOOCV (since training sets in LOOCV are nearly identical to each other, their error estimates can be highly correlated). Furthermore, it is significantly faster to compute, making k-fold CV the industry standard for most practical machine learning workflows.
 
 # Technique 4: Repeated k-fold Cross-Validation
 
