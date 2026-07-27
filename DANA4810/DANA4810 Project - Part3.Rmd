@@ -266,9 +266,9 @@ print(kfold_model)
 
 ## Comment
 
-1. $R^2$ ($\approx 0.498$): Indicates that our linear model explains approximately 49.8% of the variance in the presence of heart disease. Interestingly, this $R^2$ is slightly higher than both the single Data Split (≈0.370) and LOOCV (≈0.486), suggesting that averaging across 10 random folds provided a highly stable estimate of the model's true predictive capability.
+1. $R^2$ ($\approx 0.499$): Indicates that our linear model explains approximately 49.9% of the variance in the presence of heart disease. Interestingly, this $R^2$ is slightly higher than both the single Data Split (≈0.370) and LOOCV (≈0.504), suggesting that averaging across 10 random folds provided a highly stable estimate of the model's true predictive capability.
 
-2. RMSE ($\approx 0.352$) & MAE ($\approx 0.271$): On average, the model's predictions deviate by about 0.272. Both of these error metrics are slightly lower (better) than those seen in the Data Split and LOOCV techniques.
+2. RMSE ($\approx 0.352$) & MAE ($\approx 0.272$): On average, the model's predictions deviate by about 0.272. Both of these error metrics are slightly lower (better) than those seen in the Data Split and LOOCV techniques.
 
 3. Bias-Variance Trade-off: 10-fold CV strikes an excellent balance. It avoids the high variance associated with a single train/test split (because performance is averaged over 10 tests), and it largely avoids the high variance sometimes associated with LOOCV (since training sets in LOOCV are nearly identical to each other, their error estimates can be highly correlated). Furthermore, it is significantly faster to compute, making k-fold CV the industry standard for most practical machine learning workflows.
 
