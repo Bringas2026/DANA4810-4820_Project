@@ -50,7 +50,7 @@ In this project, we explore and compare four major cross-validation techniques u
 
 By applying these methods to a practical data set, we aim to document their underlying concepts, demonstrate their implementation in R, and analyze the advantages and drawbacks regarding computational cost, bias, and variance to determine when to use each technique appropriately.
 
-### Model Performance Metrics
+## Model Performance Metrics
 
 To evaluate and compare the predictive accuracy of our models across four different Cross-validation techniques, we utilize three standard continuous performance metrics:
 
@@ -350,12 +350,13 @@ repeated_cv_model$resample %>%
    a 26% tightening of our estimate, achieved purely by re-shuffling the
    folds and re-running the same 10-fold procedure 5 times.
 
+
 # When to Use Which Technique
 
 Beyond simply implementing each technique, it is important to understand
 *when* each one is the right tool for the job. This section reflects on
-the three techniques we have implemented so far, Data Split, LOOCV, and
-$k$-fold CV, using both the theory behind them and what we actually
+the four techniques we have implemented so far, Data Split, LOOCV, and
+$k$-fold CV, and Repeated $k$-fold CV, using both the theory behind them and what we actually
 observed on the Cleveland Heart Disease dataset.
 
 ## Dataset size matters most
@@ -369,7 +370,7 @@ observed on the Cleveland Heart Disease dataset.
 - **LOOCV**, **$k$-fold CV**, and **Repeated $k$-fold CV** all use
   nearly all of the data for training in every iteration, which is why
   they gave higher and more consistent estimates
-  ($R^2 \approx 0.504$, $0.498$, and $0.512$ respectively). For a
+  ($R^2 \approx 0.504$, $0.499$, and $0.512$ respectively). For a
   dataset much larger than ours (tens of thousands of rows), a single
   data split would be far less risky, since even a 20% test set would
   still contain thousands of observations.
