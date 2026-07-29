@@ -30,6 +30,11 @@ head(raw)
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # (b) Is there a way to perform a drop-in-devianve test for R and Python?
@@ -37,6 +42,11 @@ head(raw)
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # (c) How do you perform a goodness-of-fit test for grouped data using deviance?
@@ -44,12 +54,22 @@ head(raw)
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # (d) How to perform a Hosmer-Lemeshow test in R and Python?
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # (e) How is classification table (confusion matrix) used in logistic regression?
@@ -57,6 +77,11 @@ head(raw)
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # (f) What is the role ROC curve/AUC in logistic regression?
@@ -64,6 +89,11 @@ head(raw)
 ## Description
 
 ## Implementation
+### 1. R Implementation
+
+### 2. Python Implementation (using reticulate)
+
+### 3. Comparison of R and Python Outputs
 
 
 # Conclusion / Summary
