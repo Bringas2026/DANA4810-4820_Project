@@ -10,6 +10,8 @@ subtitle: How to make use of the reticulate R package to run BOTH Python and R c
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+py_install(c("pandas", "statsmodels", "scipy"))
 ```
 
 **Course: DANA 4820**
@@ -46,9 +48,23 @@ This severe class distribution will be taken into account when assessing how the
 ```{r}
 # Checking the dependent variable
 prop.table(table(raw$y))
+# Fix: keep y as a factor for R's glm(), and create a SEPARATE numeric
+# column for the Python/statsmodels side, so nothing overwrites the other.
 bank <- raw
+bank$y     <- factor(raw$y, levels = c("no", "yes"))  # for R glm()
+bank$y_bin <- ifelse(raw$y == "yes", 1, 0)              # for Python statsmodels (via reticulate)
 ```
+```{python}
+# Bring the R `bank` data.frame into Python via reticulate.
+# y_bin (0/1) is what statsmodels' Binomial family expects.
+import pandas as pd
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from scipy import stats
 
+bank = r.bank
+bank['y_bin'] = bank['y_bin'].astype(int)
+```
 
 # (a) How to fit both grouped and ungrouped datasets?
 ### You should interpret one or more of the coefficients.
@@ -63,16 +79,116 @@ bank <- raw
 
 
 # (b) Is there a way to perform a drop-in-devianve test for R and Python?
+
 ### Make sure you explain the purpose of a drop-in-deviance test in logistic regression. You may use a simple example but make sure your models are nested.
+
 ## Description
 
-## Implementation
+The **drop-in-deviance test** answers the question: *"Does adding one
+or more extra predictors to my model significantly improve how well it fits
+the data?"*
+
+- **Deviance** is a measure of how poorly a model fits the data (lower
+  deviance = better fit), calculated as $-2$ times the difference between
+  the log-likelihood of the fitted model and the log-likelihood of a
+  "saturated" model that fits the data perfectly.
+- Two models are **nested** when the simpler ("reduced") model's predictors
+  are a subset of the more complex ("full") model's predictors.
+- If the extra predictor in the full model don't really help explain the
+  outcome, the *decrease* in deviance from adding them ("drop-in-deviance")
+  should be small and consistent with random noise. If they do help, the
+  decrease should be larger than we'd expect by chance.
+- Under the null hypothesis that the extra predictors have coefficients
+  equal to zero, the drop-in-deviance statistic
+  $$G^2 = \text{Deviance}_{\text{reduced}} - \text{Deviance}_{\text{full}}$$
+  follows an approximate **chi-squared distribution** with degrees of
+  freedom equal to the difference in the number of parameters between the
+  two models. A small p-value means the full model fits significantly
+  better, so the extra predictor(s) are worth keeping.
+
+For our example, we use the ungrouped bank data and compare two nested
+models:
+
+- **Reduced model**: `y ~ housing + loan`
+- **Full model**: `y ~ housing + loan + campaign`
+
+These are nested because the reduced model's predictors (`housing`, `loan`)
+are a subset of the full model's predictors. We are testing whether
+`campaign` (the number of contacts made during this campaign for a given
+client) adds anything useful once `housing` and `loan` are already in the
+model.
+
 ### 1. R Implementation
+
+
+R has a convenient built-in function, `anova()`, that performs the
+drop-in-deviance test directly when given two nested `glm` objects and
+`test = "Chisq"`:
+
+```{r deviance-test-r}
+mod.reduced.r <- glm(y ~ housing + loan, family = binomial, data = bank)
+mod.full.r    <- glm(y ~ housing + loan + campaign, family = binomial, data = bank)
+
+anova(mod.reduced.r, mod.full.r, test = "Chisq")
+```
+
+We can also verify this "by hand" using the deviances and residual degrees
+of freedom stored in each fitted model object:
+
+```{r deviance-test-r-manual}
+G2 <- deviance(mod.reduced.r) - deviance(mod.full.r)
+df_diff <- mod.reduced.r$df.residual - mod.full.r$df.residual
+pval <- 1 - pchisq(G2, df_diff)
+cat("G^2 =", G2, " df =", df_diff, " p-value =", pval, "\n")
+```
 
 ### 2. Python Implementation (using reticulate)
 
+Because this document runs Python through `reticulate`, the `bank`
+DataFrame created in the setup chunk is reused here directly -- there is no
+need to reload the data. `statsmodels` does not have a single built-in
+"anova for nested GLMs" function like R's `anova()`, so the standard
+approach is to fit both models and compute the drop-in-deviance statistic
+manually using `scipy.stats.chi2`:
+
+```{python deviance-test-py}
+mod_reduced_py = smf.glm("y_bin ~ housing + loan", data=bank,
+                          family=sm.families.Binomial()).fit()
+mod_full_py = smf.glm("y_bin ~ housing + loan + campaign", data=bank,
+                       family=sm.families.Binomial()).fit()
+
+G2 = mod_reduced_py.deviance - mod_full_py.deviance
+df_diff = mod_reduced_py.df_resid - mod_full_py.df_resid
+pval = 1 - stats.chi2.cdf(G2, df_diff)
+
+print(f"Reduced deviance: {mod_reduced_py.deviance:.4f} (df={mod_reduced_py.df_resid})")
+print(f"Full deviance:    {mod_full_py.deviance:.4f} (df={mod_full_py.df_resid})")
+print(f"G^2 = {G2:.4f}, df = {df_diff}, p-value = {pval:.6g}")
+```
+
+
 ### 3. Comparison of R and Python Outputs
 
+| Quantity | R | Python |
+|---|---|---|
+| Reduced deviance | 3157.146 | 3157.146 |
+| Full deviance | 3133.587 | 3133.587 |
+| $G^2$ (drop-in-deviance) | 23.559 | 23.559 |
+| df | 1 | 1 |
+| p-value | $1.21\times10^{-6}$ | $1.21\times10^{-6}$ |
+
+R and Python agree exactly on every number, because both are computing the
+same maximum-likelihood deviances and the same chi-squared reference
+distribution -- R simply wraps the calculation in the convenience function
+`anova()`, while Python requires assembling the same formula
+(`deviance.reduced - deviance.full`, compared to `chi2`) by hand.
+
+**In simple terms:** because the p-value is far below the usual 0.05
+threshold, we reject the null hypothesis that `campaign`'s coefficient is
+zero. Adding `campaign` to the model produces a statistically significant
+drop in deviance, meaning the number of contact attempts made during the
+campaign does carry real, additional information about whether a client
+subscribes, even after accounting for `housing` and `loan`.
 
 # (c) How do you perform a goodness-of-fit test for grouped data using deviance?
 ### Note that you will learn in class that you cannot use the same approach (using deviance) for ungrouped data. For ungrouped data, you will learn that the correct approach is to use a Hosmer-Lemeshow (goodness-of-fit) test.
