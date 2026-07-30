@@ -1,6 +1,6 @@
 ---
 title: "DANA 4820 Project Part 2 - Logistic Regression"
-author: "Team Name Here"
+author: "Haruka Sawakami, Nandini Bhatia, Khuspreet Kaur, Diego Bringas"
 date: "2026-07-30"
 output:
   html_document:
