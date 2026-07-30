@@ -17,11 +17,21 @@ knitr::opts_chunk$set(echo = TRUE)
 # Introduction
 
 # The Dataset
-
+We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing) (bank.csv) to compare both R and Python in terms of logistic regression output.
 
 ```{r}
 raw <- read.csv("data/bank.csv", header = TRUE, sep = ";")
 head(raw)
+
+# Checking overall structure of data set
+str(raw)
+summary(raw)
+
+# The composition ratio of the dependent variable (y)
+table(raw$y)
+prop.table(table(raw$y))
+
+bank <- raw
 ```
 
 
@@ -52,6 +62,21 @@ head(raw)
 # (c) How do you perform a goodness-of-fit test for grouped data using deviance?
 ### Note that you will learn in class that you cannot use the same approach (using deviance) for ungrouped data. For ungrouped data, you will learn that the correct approach is to use a Hosmer-Lemeshow (goodness-of-fit) test.
 ## Description
+A goodness-of-fit test helps us check if our logistic regression model accurately describes the actual data overall.
+When we have Grouped Data (data where observations with the same predictor values are combined into groups with a trial count and success count), we can use the model's Residual Deviance to perform this test.
+
+**Why does Deviance work for Grouped Data?**
+
+- When the sample size in each group ($n_i$) is large enough, the Residual Deviance follows a Chi-Square ($\chi^2$) distribution.
+- Therefore, we can use a Chi-Square test to see if the difference between our model's predictions and the actual data is statistically acceptable.
+- Null Hypothesis ($H_0$): The model fits the data adequately
+- Alternative Hypothesis ($H_a$): The model does not fit the data adequately (lack of fit)
+- If the $p$-value is greater than 0.05, we fail to reject $H_0$ and conclude that our model fits the data adequately
+- If the $p$-value is smaller than 0.05, we reject $H_0$ and conclude there is lack of fit. It indicates that there might be three possible reasons why that is the case; missing covariates, outliers, and overdispersion.
+
+Important Note: Why can't we use Deviance for Ungrouped Data?
+
+In Ungrouped Data (where each row represents a single individual with a binary outcome of 0 or 1), the sample size for each row is always $n_i = 1$. Under this condition, the Residual Deviance does not follow a Chi-Square distribution. Using Deviance here gives incorrect results. For ungrouped data, we must use the Hosmer-Lemeshow test instead (covered in the following section d).
 
 ## Implementation
 ### 1. R Implementation
