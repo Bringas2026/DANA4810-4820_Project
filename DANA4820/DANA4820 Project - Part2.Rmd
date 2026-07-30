@@ -628,9 +628,15 @@ in part (e).
 
 # Conclusion / Summary
 
+This project covered the core toolkit for building and evaluating a logistic regression model, using the UCI Bank Marketing dataset to predict term deposit subscription. We compared grouped vs. ungrouped data (a), tested whether a new predictor improves the model using drop-in-deviance (b), assessed goodness-of-fit with deviance for grouped data (c) and Hosmer-Lemeshow for ungrouped data (d), and evaluated predictive performance with a classification table (e) and ROC/AUC (f).
+
+Every test was implemented in both R and Python via reticulate, and in every case the two languages produced identical results — confirming that the underlying statistics don't change with the programming language, only the syntax does. The main substantive finding was that campaign is a significant predictor, but the model's usefulness is limited by the data's strong class imbalance which hurt sensitivity at the default 0.5 cutoff — a common issue worth addressing in future work through cutoff adjustment or imbalance-aware modeling techniques.
+
 
 # References
 
 Moro S, Rita P, Cortez P. Bank Marketing [dataset]. 2014. UCI Machine Learning Repository. Available from: https://doi.org/10.24432/C5K306.
+
+statsmodels Developers. (2026). statsmodels: GLM — Generalized Linear Models [Documentation]. https://www.statsmodels.org/stable/glm.html
 
 Ushey, K., Allaire, J. J., & Tang, Y. (2026). reticulate: Interface to 'Python' [R package documentation]. https://rstudio.github.io/reticulate/
