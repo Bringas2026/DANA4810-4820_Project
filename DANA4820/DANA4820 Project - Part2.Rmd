@@ -190,9 +190,9 @@ print(mod_grouped_py.summary())
 
 | Coefficient | Ungrouped (R) | Grouped (R) | Ungrouped (Python) | Grouped (Python) |
 |---|---|---|---|---|
-| Intercept | matches across all four | matches across all four | matches across all four | matches across all four |
-| `housing[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
-| `loan[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
+| **Intercept** | -1.6212 | -1.6212 | -1.6212 | -1.6212 |
+| **`housing[yes]`** | -0.6508 | -0.6508 | -0.6508 | -0.6508 |
+| **`loan[yes]`** | -0.7548 | -0.7548 | -0.7548 | -0.7548 |
 
 All four fits (R ungrouped, R grouped, Python ungrouped, Python grouped)
 return numerically identical coefficients, because grouping rows with
