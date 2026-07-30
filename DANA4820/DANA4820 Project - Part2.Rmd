@@ -12,9 +12,9 @@ subtitle: How to make use of the reticulate R package to run BOTH Python and R c
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 py_install(c("pandas", "statsmodels", "scipy"))
+reticulate::py_install("scikit-learn")
+reticulate::py_install("matplotlib")
 ```
-
-**Course: DANA 4820**
 
 # Introduction
 
@@ -51,7 +51,7 @@ prop.table(table(raw$y))
 # Fix: keep y as a factor for R's glm(), and create a SEPARATE numeric
 # column for the Python/statsmodels side, so nothing overwrites the other.
 bank <- raw
-bank$y     <- factor(raw$y, levels = c("no", "yes"))  # for R glm()
+bank$y     <- factor(raw$y, levels = c("no", "yes"))    # for R glm()
 bank$y_bin <- ifelse(raw$y == "yes", 1, 0)              # for Python statsmodels (via reticulate)
 ```
 ```{python}
@@ -124,6 +124,7 @@ Comparing coefficients directly confirms they match:
 round(cbind(ungrouped = coef(mod.ungrouped.r),
             grouped   = coef(mod.grouped.r)), 6)
 ```
+
 ### 2. Python Implementation (using reticulate)
 **Ungrouped fit**:
 
@@ -149,6 +150,7 @@ mod_grouped_py = smf.glm("success + failure ~ housing + loan",
                           family=sm.families.Binomial()).fit()
 print(mod_grouped_py.summary())
 ```
+
 ### 3. Comparison of R and Python Outputs
 
 | Coefficient | Ungrouped (R) | Grouped (R) | Ungrouped (Python) | Grouped (Python) |
@@ -170,6 +172,7 @@ loan** has lower odds of subscribing to the term deposit than a client
 without a housing loan. Similarly, the coefficient on `loan[yes]` is
 negative, meaning clients who already carry a personal loan have lower
 odds of subscribing than clients without one, holding `housing` fixed.
+
 
 # (b) Is there a way to perform a drop-in-devianve test for R and Python?
 
@@ -212,7 +215,6 @@ client) adds anything useful once `housing` and `loan` are already in the
 model.
 
 ### 1. R Implementation
-
 
 R has a convenient built-in function, `anova()`, that performs the
 drop-in-deviance test directly when given two nested `glm` objects and
@@ -259,7 +261,6 @@ print(f"Full deviance:    {mod_full_py.deviance:.4f} (df={mod_full_py.df_resid})
 print(f"G^2 = {G2:.4f}, df = {df_diff}, p-value = {pval:.6g}")
 ```
 
-
 ### 3. Comparison of R and Python Outputs
 
 | Quantity | R | Python |
@@ -283,11 +284,12 @@ drop in deviance, meaning the number of contact attempts made during the
 campaign does carry real, additional information about whether a client
 subscribes, even after accounting for `housing` and `loan`.
 
+
 # (c) How do you perform a goodness-of-fit test for grouped data using deviance?
 ### Note that you will learn in class that you cannot use the same approach (using deviance) for ungrouped data. For ungrouped data, you will learn that the correct approach is to use a Hosmer-Lemeshow (goodness-of-fit) test.
 ## Description
 A goodness-of-fit test helps us check if our logistic regression model accurately describes the actual data overall.
-When we have Grouped Data (data where observations with the same predictor values are combined into groups with a trial count and success count), we can use the model's Residual Deviance to perform this test.
+When we have **Grouped Data** (data where observations with the same predictor values are combined into groups with a trial count and success count), we can use the model's **Residual Deviance** to perform this test.
 
 **Why does Deviance work for Grouped Data?**
 
@@ -300,14 +302,50 @@ When we have Grouped Data (data where observations with the same predictor value
 
 Important Note: Why can't we use Deviance for Ungrouped Data?
 
-In Ungrouped Data (where each row represents a single individual with a binary outcome of 0 or 1), the sample size for each row is always $n_i = 1$. Under this condition, the Residual Deviance does not follow a Chi-Square distribution. Using Deviance here gives incorrect results. For ungrouped data, we must use the Hosmer-Lemeshow test instead (covered in the following section d).
+In Ungrouped Data (where each row represents a single individual with a binary outcome of 0 or 1), the sample size for each row is always $n_i = 1$. Under this condition, the Residual Deviance does **not** follow a Chi-Square distribution. Using Deviance here yields mathematically incorrect $p$-values. For ungrouped data, we must use the Hosmer-Lemeshow test instead (covered in section d).
+
+We perform the goodness-of-fit test on our grouped model fitted in section (a) (`y ~ housing + loan`), which aggregates the 4,521 observations into the 4 unique covariate combinations of `housing` and `loan`.
 
 ## Implementation
 ### 1. R Implementation
+In R, the residual deviance and residual degrees of freedom are stored directly in the `glm` fitted object (`deviance` and `df.residual`). We test against the upper tail of the $\chi^2$ distribution using `pchisq()`:
+
+```{r gof-grouped-r}
+# Obtain residual deviance and residual degrees of freedom from the grouped model in part (a)
+dev_c.r  <- deviance(mod.grouped.r)
+df_c.r   <- mod.grouped.r$df.residual
+pval_c.r <- 1 - pchisq(dev_c.r, df_c.r)
+
+cat("Residual Deviance:", round(dev_c.r, 4), "\n")
+cat("Residual Degrees of Freedom:", df_c.r, "\n")
+cat("Chi-Square Goodness-of-Fit p-value:", round(pval_c.r, 4), "\n")
+```
 
 ### 2. Python Implementation (using reticulate)
+In Python (statsmodels), the residual deviance is accessed via .deviance and residual degrees of freedom via .df_resid. We calculate the $p$-value using scipy.stats.chi2.sf (survival function, which calculates $1 - \text{CDF}$):
+
+```{python goodness-of-fit-py}
+dev_c_py = mod_grouped_py.deviance
+df_c_py  = mod_grouped_py.df_resid
+pval_c_py = stats.chi2.sf(dev_c_py, df_c_py)
+
+print(f"Residual Deviance: {dev_c_py:.4f}")
+print(f"Residual Degrees of Freedom: {df_c_py}")
+print(f"Chi-Square Goodness-of-Fit p-value: {pval_c_py:.4f}")
+```
 
 ### 3. Comparison of R and Python Outputs
+| Metric | R | Python |
+|---|---|---|
+| Residual Deviance | 4.2626 | 4.2626 |
+| Residual Degrees of Freedom | 1 | 1 |
+| Chi-Square p-value | 0.0390 | 0.0390 |
+
+**Statistical Interpretation:**
+
+Both R and Python yield an identical residual deviance of 4.2626 on 1 degree of freedom, corresponding to a $p$-value of 0.0390. Since $p = 0.0390 < 0.05$, we reject the null hypothesis ($H_0$) at the standard 5% significance level. 
+
+There is statistically significant evidence of lack of fit, indicating that the simplified model using only `housing` and `loan` is inadequate for explaining the target variable. This suggests that important covariates (such as `campaign` or `poutcome`) are missing, or that interaction effects/overdispersion exist in the data.
 
 
 # (d) How to perform a Hosmer-Lemeshow test in R and Python?
@@ -459,6 +497,7 @@ noted earlier, not a flaw specific to either implementation -- a lower
 classification cutoff (e.g., 0.2 or 0.3) would trade some specificity
 for improved sensitivity, and is a common adjustment for imbalanced
 data.
+
 
 # (f) What is the role ROC curve/AUC in logistic regression?
 ### How to create such a curve in R and Python.
