@@ -17,20 +17,35 @@ knitr::opts_chunk$set(echo = TRUE)
 # Introduction
 
 # The Dataset
-We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing) (bank.csv) to compare both R and Python in terms of logistic regression output.
+## Dataset Overview & Sample Size
+
+We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing) (bank.csv) to compare both R and Python in terms of logistic regression output. The data is related with direct marketing campaigns of a Portuguese banking institution. The marketing campaigns were based on phone calls. Often, more than one contact to the same client was required, in order to access if the product (bank term deposit) would be ("yes") or not ("no") subscribed.
+
+It comprises 4,521 observations across 17 variables (16 feature attributes and 1 binary target variable, y). There are no traditional NA missing values present; however, several categorical attributes include an "unknown" category (e.g., contact, poutcome), which may serve as an implicit missing status.
 
 ```{r}
+# Load data set
 raw <- read.csv("data/bank.csv", header = TRUE, sep = ";")
 head(raw)
 
-# Checking overall structure of data set
+# Checking overview of data set
 str(raw)
 summary(raw)
-
-# The composition ratio of the dependent variable (y)
 table(raw$y)
-prop.table(table(raw$y))
+```
 
+## Target Variable Imbalance
+
+The primary objective is to predict whether a client will subscribe to a term deposit (y). The target feature is highly imbalanced:
+
+- No (y = "no"): 4,000 instances (88.48%)
+- Yes (y = "yes"): 521 instances (11.52%)
+
+This severe class distribution will be taken into account when assessing how the model fit the data and goodness-of-fit metrics.
+
+```{r}
+# Checking the dependent variable
+prop.table(table(raw$y))
 bank <- raw
 ```
 
