@@ -627,3 +627,8 @@ part (b) -- even though its sensitivity at a naive 0.5 cutoff was poor
 in part (e).
 
 # Conclusion / Summary
+
+
+# References
+
+Moro S, Rita P, Cortez P. Bank Marketing [dataset]. 2014. UCI Machine Learning Repository. Available from: https://doi.org/10.24432/C5K306.
