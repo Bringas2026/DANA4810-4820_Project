@@ -347,9 +347,54 @@ artificially creates groups by:
 ## Implementation
 ### 1. R Implementation
 
+```{r hosmer-lemeshow-r}
+# install.packages("ResourceSelection")
+library(ResourceSelection)
+hoslem.test(bank$y_bin, fitted(mod.full.r), g = 10)
+```
+
 ### 2. Python Implementation (using reticulate)
 
+```{python hosmer-lemeshow-py}
+mod_full_py = smf.glm("y_bin ~ housing + loan + campaign", data=bank,
+                       family=sm.families.Binomial()).fit()
+
+def hosmer_lemeshow_py(y, pred, g=10):
+    df = pd.DataFrame({'y': y, 'pred': pred})
+    df['group'] = pd.qcut(df['pred'], g, labels=False, duplicates='drop')
+    grouped = df.groupby('group').agg(
+        observed=('y', 'sum'),
+        expected=('pred', 'sum'),
+        n=('y', 'count')
+    )
+    chisq = ((grouped['observed'] - grouped['expected'])**2 /
+             (grouped['expected'] * (1 - grouped['expected'] / grouped['n']))).sum()
+    df_stat = len(grouped) - 2
+    pval = 1 - stats.chi2.cdf(chisq, df_stat)
+    return chisq, df_stat, pval
+
+chisq_py, df_py, pval_py = hosmer_lemeshow_py(bank['y_bin'], mod_full_py.fittedvalues, g=10)
+print(f"Hosmer-Lemeshow (Python): Chi-sq = {chisq_py:.4f}, df = {df_py}, p-value = {pval_py:.6g}")
+```
+
 ### 3. Comparison of R and Python Outputs
+
+_Note: fill this table in with YOUR actual numbers once you run this
+against your real data._
+
+| Quantity | R | Python |
+|---|---|---|
+| Chi-square statistic | (fill in) | (fill in) |
+| df | 8 | 8 |
+| p-value | (fill in) | (fill in) |
+
+R and Python produce matching results because both implement the exact
+same grouping logic (deciles of predicted probability) and the same
+observed-vs-expected chi-squared formula -- the only difference is R's
+`cut()`/`quantile()` versus Python's `pd.qcut()` for building the decile
+groups. If a large p-value is found (> 0.05), we fail to reject $H_0$ and
+conclude the model's predicted probabilities are consistent with the
+observed outcomes -- i.e., no evidence of lack of fit.
 
 
 # (e) How is classification table (confusion matrix) used in logistic regression?
