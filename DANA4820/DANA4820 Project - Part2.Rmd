@@ -678,3 +678,4 @@ in part (e).
 
 Moro S, Rita P, Cortez P. Bank Marketing [dataset]. 2014. UCI Machine Learning Repository. Available from: https://doi.org/10.24432/C5K306.
 
+Ushey, K., Allaire, J. J., & Tang, Y. (2026). reticulate: Interface to 'Python' [R package documentation]. https://rstudio.github.io/reticulate/
