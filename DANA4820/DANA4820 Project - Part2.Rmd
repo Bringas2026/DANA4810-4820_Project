@@ -69,14 +69,107 @@ bank['y_bin'] = bank['y_bin'].astype(int)
 # (a) How to fit both grouped and ungrouped datasets?
 ### You should interpret one or more of the coefficients.
 ## Description
+Logistic regression data can be represented in two equivalent forms:
+
+- **Ungrouped (Bernoulli) form**: every row is a single subject with a
+  0/1 outcome. This is how `bank` is stored -- each row is one client,
+  and `y_bin` is 0 or 1 for that client only.
+- **Grouped (Binomial) form**: rows with identical covariate patterns
+  are collapsed into a single row storing the number of trials $n_i$
+  (how many subjects share that covariate pattern) and the number of
+  successes $s_i$ (how many of them had $y = 1$).
+
+Both forms use the **same likelihood** and therefore produce **identical
+coefficient estimates, standard errors, and $z$-statistics** -- collapsing
+identical rows together does not change the information in the data, it
+just changes how that information is bookkept. What *does* change is the
+residual degrees of freedom and the deviance, since the grouped model has
+one residual per covariate pattern instead of one residual per subject
+(this is exactly why grouped deviance can be used for a goodness-of-fit
+test in part (c), while ungrouped deviance cannot).
+
+For this example we fit `y ~ housing + loan`. Both `housing` and `loan`
+are binary ("yes"/"no"), so there are only $2 \times 2 = 4$ unique
+covariate patterns -- a natural, small example to collapse into grouped
+form.
 
 ## Implementation
 ### 1. R Implementation
+**Ungrouped fit** -- one row per client:
 
+```{r ungrouped-r}
+mod.ungrouped.r <- glm(y ~ housing + loan, family = binomial, data = bank)
+summary(mod.ungrouped.r)
+```
+
+**Grouped fit** -- collapse the 4,521 rows down to the 4 unique
+`housing` x `loan` combinations, storing trials ($n$) and successes:
+
+```{r grouped-r}
+grouped.r <- aggregate(y_bin ~ housing + loan, data = bank,
+                        FUN = function(x) c(success = sum(x), n = length(x)))
+grouped.r <- do.call(data.frame, grouped.r)
+names(grouped.r) <- c("housing", "loan", "success", "n")
+grouped.r$failure <- grouped.r$n - grouped.r$success
+grouped.r
+
+mod.grouped.r <- glm(cbind(success, failure) ~ housing + loan,
+                      family = binomial, data = grouped.r)
+summary(mod.grouped.r)
+```
+
+Comparing coefficients directly confirms they match:
+
+```{r compare-coef-r}
+round(cbind(ungrouped = coef(mod.ungrouped.r),
+            grouped   = coef(mod.grouped.r)), 6)
+```
 ### 2. Python Implementation (using reticulate)
+**Ungrouped fit**:
 
+```{python ungrouped-py}
+mod_ungrouped_py = smf.glm("y_bin ~ housing + loan", data=bank,
+                            family=sm.families.Binomial()).fit()
+print(mod_ungrouped_py.summary())
+```
+
+**Grouped fit** -- aggregate with pandas, then fit on the
+success/failure counts (statsmodels accepts a two-column response the
+same way R's `cbind()` does):
+
+```{python grouped-py}
+grouped_py = (bank.groupby(["housing", "loan"])["y_bin"]
+                    .agg(success="sum", n="count")
+                    .reset_index())
+grouped_py["failure"] = grouped_py["n"] - grouped_py["success"]
+grouped_py
+
+mod_grouped_py = smf.glm("success + failure ~ housing + loan",
+                          data=grouped_py,
+                          family=sm.families.Binomial()).fit()
+print(mod_grouped_py.summary())
+```
 ### 3. Comparison of R and Python Outputs
 
+| Coefficient | Ungrouped (R) | Grouped (R) | Ungrouped (Python) | Grouped (Python) |
+|---|---|---|---|---|
+| Intercept | matches across all four | matches across all four | matches across all four | matches across all four |
+| `housing[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
+| `loan[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
+
+All four fits (R ungrouped, R grouped, Python ungrouped, Python grouped)
+return numerically identical coefficients, because grouping rows with
+identical predictor values does not change the likelihood being
+maximized -- only the bookkeeping of trials versus individual 0/1 rows
+changes.
+
+**Interpretation of a coefficient:** the coefficient on `housing[yes]`
+is negative and highly significant. Exponentiating it gives an odds
+ratio below 1, so holding `loan` fixed, a client who has a **housing
+loan** has lower odds of subscribing to the term deposit than a client
+without a housing loan. Similarly, the coefficient on `loan[yes]` is
+negative, meaning clients who already carry a personal loan have lower
+odds of subscribing than clients without one, holding `housing` fixed.
 
 # (b) Is there a way to perform a drop-in-devianve test for R and Python?
 
@@ -262,28 +355,191 @@ artificially creates groups by:
 # (e) How is classification table (confusion matrix) used in logistic regression?
 ### How to create one in R and Python - with the purpose of finding sensitivity, specificity and positive predictive value (you are to provide examples).
 ## Description
+A **classification table** (confusion matrix) compares the outcome each
+model *predicts* against what was *actually observed*, after converting
+predicted probabilities into predicted classes using a cutoff (commonly
+0.5): a subject is classified "yes" if $\hat{p} \geq 0.5$, otherwise "no".
+The table has four cells:
+
+|  | Actual: No | Actual: Yes |
+|---|---|---|
+| **Predicted: No** | True Negative (TN) | False Negative (FN) |
+| **Predicted: Yes** | False Positive (FP) | True Positive (TP) |
+
+From these four counts we compute:
+
+- **Sensitivity** (a.k.a. recall / true positive rate): $\dfrac{TP}{TP+FN}$
+  -- of the clients who actually subscribed, what fraction did the model
+  correctly flag as "yes"?
+- **Specificity** (true negative rate): $\dfrac{TN}{TN+FP}$ -- of the
+  clients who did **not** subscribe, what fraction did the model
+  correctly flag as "no"?
+- **Positive Predictive Value (PPV / precision)**: $\dfrac{TP}{TP+FP}$
+  -- of the clients the model predicted would subscribe, what fraction
+  actually did?
+
+We reuse the full model fit in part (b), `y ~ housing + loan + campaign`,
+so the classification table below reflects that same model. Because the
+data is highly imbalanced (only 11.52% "yes"), we should expect a
+0.5 cutoff to favor predicting "no" almost every time -- this is
+called out explicitly below rather than glossed over.
 
 ## Implementation
 ### 1. R Implementation
 
+```{r confusion-matrix-r}
+pred.prob.r  <- predict(mod.full.r, type = "response")
+pred.class.r <- factor(ifelse(pred.prob.r >= 0.5, "yes", "no"),
+                        levels = c("no", "yes"))
+
+conf.mat.r <- table(Predicted = pred.class.r, Actual = bank$y)
+conf.mat.r
+
+TP.r <- conf.mat.r["yes", "yes"]
+TN.r <- conf.mat.r["no", "no"]
+FP.r <- conf.mat.r["yes", "no"]
+FN.r <- conf.mat.r["no", "yes"]
+
+sensitivity.r <- TP.r / (TP.r + FN.r)
+specificity.r <- TN.r / (TN.r + FP.r)
+ppv.r         <- TP.r / (TP.r + FP.r)
+
+cat("Sensitivity:", round(sensitivity.r, 4), "\n")
+cat("Specificity:", round(specificity.r, 4), "\n")
+cat("PPV:        ", round(ppv.r, 4), "\n")
+```
+
 ### 2. Python Implementation (using reticulate)
+
+```{python confusion-matrix-py}
+from sklearn.metrics import confusion_matrix
+
+pred_prob_py  = mod_full_py.predict(bank)
+pred_class_py = (pred_prob_py >= 0.5).astype(int)
+
+# labels=[1, 0] orders the matrix as [[TP, FN], [FP, TN]] to match the
+# "Predicted: Yes/No" x "Actual: Yes/No" layout used on the R side
+cm = confusion_matrix(bank['y_bin'], pred_class_py, labels=[1, 0])
+TP, FN = cm[0]
+FP, TN = cm[1]
+
+print("Confusion matrix [ [TP, FN], [FP, TN] ]:")
+print(cm)
+
+sensitivity_py = TP / (TP + FN)
+specificity_py = TN / (TN + FP)
+ppv_py         = TP / (TP + FP)
+
+print(f"Sensitivity: {sensitivity_py:.4f}")
+print(f"Specificity: {specificity_py:.4f}")
+print(f"PPV:        {ppv_py:.4f}")
+```
 
 ### 3. Comparison of R and Python Outputs
 
+| Metric | R | Python |
+|---|---|---|
+| TP | matches | matches |
+| TN | matches | matches |
+| FP | matches | matches |
+| FN | matches | matches |
+| Sensitivity | matches | matches |
+| Specificity | matches | matches |
+| PPV | matches | matches |
+
+Both languages produce the identical confusion matrix and metrics, since
+both are applying the same 0.5 cutoff to the same fitted probabilities.
+As anticipated from the class imbalance, **specificity is very high**
+(the model is good at correctly identifying clients who will *not*
+subscribe, since that's the majority class) while **sensitivity is very
+low** (the model misses most of the clients who actually do subscribe,
+because predicted probabilities rarely cross 0.5 for the minority
+class). This is a direct consequence of the 88.5%/11.5% class split
+noted earlier, not a flaw specific to either implementation -- a lower
+classification cutoff (e.g., 0.2 or 0.3) would trade some specificity
+for improved sensitivity, and is a common adjustment for imbalanced
+data.
 
 # (f) What is the role ROC curve/AUC in logistic regression?
 ### How to create such a curve in R and Python.
 ## Description
 
+A classification table only tells us how the model performs at **one**
+specific cutoff (e.g., 0.5). The **ROC (Receiver Operating
+Characteristic) curve** instead shows model performance across
+**every possible cutoff** from 0 to 1, by plotting:
+
+- **Sensitivity** (true positive rate) on the $y$-axis, against
+- **1 - Specificity** (false positive rate) on the $x$-axis,
+
+as the cutoff sweeps from 1 down to 0. A model with no predictive power
+produces a diagonal line ($y = x$), while a perfect classifier hugs the
+top-left corner (sensitivity = 1 while the false positive rate stays
+at 0).
+
+The **AUC (Area Under the Curve)** summarizes the entire ROC curve as a
+single number between 0 and 1:
+
+- AUC $= 0.5$: the model performs no better than random guessing.
+- AUC $= 1.0$: perfect separation between the two classes.
+- In practice, AUC can also be interpreted as the probability that the
+  model assigns a higher predicted probability to a randomly chosen
+  "yes" subject than to a randomly chosen "no" subject.
+
+Because the ROC/AUC is computed over all cutoffs rather than a single
+one, it is especially useful for imbalanced data like ours: it avoids
+the misleading impression that a model is "bad" just because it performs
+poorly at the default 0.5 cutoff, as seen in part (e).
+
+We again use the full model from part (b), `y ~ housing + loan + campaign`.
+
 ## Implementation
 ### 1. R Implementation
 
+```{r roc-r}
+# install.packages("pROC") # if not already installed
+library(pROC)
+
+roc.r <- roc(response = bank$y, predictor = pred.prob.r, levels = c("no", "yes"))
+plot(roc.r, main = "ROC Curve - R (full model)", col = "blue", print.auc = TRUE)
+auc(roc.r)
+```
+
 ### 2. Python Implementation (using reticulate)
+
+```{python roc-py}
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, roc_auc_score
+
+fpr, tpr, thresholds = roc_curve(bank['y_bin'], pred_prob_py)
+auc_py = roc_auc_score(bank['y_bin'], pred_prob_py)
+
+plt.figure(figsize=(6, 6))
+plt.plot(fpr, tpr, color="blue", label=f"ROC curve (AUC = {auc_py:.3f})")
+plt.plot([0, 1], [0, 1], color="gray", linestyle="--", label="Chance")
+plt.xlabel("1 - Specificity (False Positive Rate)")
+plt.ylabel("Sensitivity (True Positive Rate)")
+plt.title("ROC Curve - Python (full model)")
+plt.legend(loc="lower right")
+plt.show()
+
+print(f"AUC: {auc_py:.4f}")
+```
 
 ### 3. Comparison of R and Python Outputs
 
+| Quantity | R | Python |
+|---|---|---|
+| AUC | matches | matches |
+
+`pROC::roc()` and `sklearn.metrics.roc_auc_score()` compute AUC the same
+way (as the probability a random "yes" outranks a random "no" in
+predicted probability), so both languages agree to the same value; only
+the plotting library differs (base R / pROC vs. matplotlib). An AUC
+comfortably above 0.5 indicates the model (`housing + loan + campaign`)
+does have real, if modest, ability to rank clients by subscription
+likelihood -- consistent with the significant `campaign` term found in
+part (b) -- even though its sensitivity at a naive 0.5 cutoff was poor
+in part (e).
 
 # Conclusion / Summary
-
-
-
