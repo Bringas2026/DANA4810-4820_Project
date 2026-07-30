@@ -1,11 +1,25 @@
 ---
 title: "DANA 4820 Project Part 2 - Logistic Regression"
 author: "Haruka Sawakami, Nandini Bhatia, Khuspreet Kaur, Diego Bringas"
-date: "2026-07-30"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
 output:
   html_document:
+    toc: true
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
     df_print: paged
-subtitle: How to make use of the reticulate R package to run BOTH Python and R code in a single .rmd file?
+    code_folding: show
+  pdf_document:
+    toc: true
+    number_sections: true
+    latex_engine: xelatex
+subtitle: How to make use of the reticulate R package to run BOTH Python and R code
+  in a single .rmd file?
 ---
 
 ```{r setup, include=FALSE}
@@ -17,11 +31,32 @@ reticulate::py_install("matplotlib")
 ```
 
 # Introduction
+In data science and statistics, **R** and **Python** are the two most widely used programming languages. While R was built specifically for statistical analysis and data visualization, Python is a general-purpose language widely used for machine learning and software development. 
+
+In real-world projects, analysts often face a dilemma: *Should we use R or Python?* Fortunately, we do not always have to choose. The **`reticulate`** package in R allows us to run Python code seamlessly inside an R environment (such as an R Markdown document). This enables us to leverage the strengths of both languages within a single file.
+
+## Objective of This Project
+
+The main goal of this report is to provide a beginner-friendly, step-by-step comparison between R and Python when performing **Logistic Regression**—a popular statistical technique used to predict binary outcomes (e.g., "Yes" or "No").
+
+Since our response variable ($y$) is binary ("yes" or "no"), standard linear regression is inappropriate as it can predict probabilities outside $[0, 1]$ and violates normality assumptions. Logistic regression is uniquely suited here because it uses the logit link function to model the probability of subscription bounded strictly between 0 and 1.
+
+Through this report, we will address several key aspects of logistic regression and compare how each language handles them:
+
+1. **Model Fitting**: How to fit logistic regression on both grouped and ungrouped datasets, and how to interpret model coefficients.
+2. **Model Comparison**: How to perform a **Drop-in-Deviance test** (Likelihood Ratio Test) to check if adding new variables improves the model.
+3. **Goodness-of-Fit Testing**: How to check if our model adequately fits the data using the **Deviance test** (for grouped data) and the **Hosmer-Lemeshow test** (for ungrouped data).
+4. **Model Performance & Evaluation**: How to evaluate predictions using a **Confusion Matrix** (Sensitivity, Specificity, Positive Predictive Value) and the **ROC Curve / AUC**.
+
+By comparing R's built-in functions (like `glm()`) with Python's equivalent libraries (`statsmodels` and `scikit-learn`), this project demonstrates that both tools lead to the exact same statistical conclusions when given the same data.
+
 
 # The Dataset
 ## Dataset Overview & Sample Size
 
 We selected the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/222/bank+marketing) (bank.csv) to compare both R and Python in terms of logistic regression output. The data is related with direct marketing campaigns of a Portuguese banking institution. The marketing campaigns were based on phone calls. Often, more than one contact to the same client was required, in order to access if the product (bank term deposit) would be ("yes") or not ("no") subscribed.
+
+From a business analytics perspective, understanding client subscription behavior allows the bank to optimize telemarketing resources. Targeting clients with higher predicted probabilities reduces campaign costs and improves overall conversion rates.
 
 It comprises 4,521 observations across 17 variables (16 feature attributes and 1 binary target variable, y). There are no traditional NA missing values present; however, several categorical attributes include an "unknown" category (e.g., contact, poutcome), which may serve as an implicit missing status.
 
@@ -94,7 +129,7 @@ covariate patterns -- a natural, small example to collapse into grouped
 form.
 
 ## Implementation
-### 1. R Implementation
+### R Implementation
 **Ungrouped fit** -- one row per client:
 
 ```{r ungrouped-r}
@@ -125,7 +160,7 @@ round(cbind(ungrouped = coef(mod.ungrouped.r),
             grouped   = coef(mod.grouped.r)), 6)
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 **Ungrouped fit**:
 
 ```{python ungrouped-py}
@@ -151,13 +186,13 @@ mod_grouped_py = smf.glm("success + failure ~ housing + loan",
 print(mod_grouped_py.summary())
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 
 | Coefficient | Ungrouped (R) | Grouped (R) | Ungrouped (Python) | Grouped (Python) |
 |---|---|---|---|---|
-| Intercept | matches across all four | matches across all four | matches across all four | matches across all four |
-| `housing[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
-| `loan[yes]` | matches across all four | matches across all four | matches across all four | matches across all four |
+| **Intercept** | -1.6212 | -1.6212 | -1.6212 | -1.6212 |
+| **`housing[yes]`** | -0.6508 | -0.6508 | -0.6508 | -0.6508 |
+| **`loan[yes]`** | -0.7548 | -0.7548 | -0.7548 | -0.7548 |
 
 All four fits (R ungrouped, R grouped, Python ungrouped, Python grouped)
 return numerically identical coefficients, because grouping rows with
@@ -165,13 +200,16 @@ identical predictor values does not change the likelihood being
 maximized -- only the bookkeeping of trials versus individual 0/1 rows
 changes.
 
-**Interpretation of a coefficient:** the coefficient on `housing[yes]`
-is negative and highly significant. Exponentiating it gives an odds
-ratio below 1, so holding `loan` fixed, a client who has a **housing
-loan** has lower odds of subscribing to the term deposit than a client
-without a housing loan. Similarly, the coefficient on `loan[yes]` is
-negative, meaning clients who already carry a personal loan have lower
-odds of subscribing than clients without one, holding `housing` fixed.
+**Interpretation of a coefficient:**
+
+In logistic regression, the raw coefficients represent the change in **log-odds**. To make them easier to understand for beginners, we convert them into **Odds Ratios (OR)** by taking $e^{\text{coefficient}}$:
+
+* **`housing[yes]` coefficient ($\approx -0.6508$):** 
+  $e^{-0.6508} \approx 0.5216$ (or $0.52$). This means that, holding personal loan status constant, a client who has a **housing loan** has about **48% lower odds** (or 0.52 times the odds) of subscribing to a term deposit compared to a client without a housing loan.
+* **`loan[yes]` coefficient ($\approx -0.7548$):** 
+  $e^{-0.7548} \approx 0.4701$ (or $0.47$). Similarly, a client with a **personal loan** has about **53% lower odds** (0.47 times the odds) of subscribing compared to one without a personal loan.
+
+Both coefficients are negative and statistically significant ($p < 0.05$), indicating that financial obligations (housing or personal loans) substantially reduce a client's likelihood of opening a new term deposit.
 
 
 # (b) Is there a way to perform a drop-in-devianve test for R and Python?
@@ -214,7 +252,7 @@ are a subset of the full model's predictors. We are testing whether
 client) adds anything useful once `housing` and `loan` are already in the
 model.
 
-### 1. R Implementation
+### R Implementation
 
 R has a convenient built-in function, `anova()`, that performs the
 drop-in-deviance test directly when given two nested `glm` objects and
@@ -237,7 +275,7 @@ pval <- 1 - pchisq(G2, df_diff)
 cat("G^2 =", G2, " df =", df_diff, " p-value =", pval, "\n")
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 
 Because this document runs Python through `reticulate`, the `bank`
 DataFrame created in the setup chunk is reused here directly -- there is no
@@ -261,7 +299,7 @@ print(f"Full deviance:    {mod_full_py.deviance:.4f} (df={mod_full_py.df_resid})
 print(f"G^2 = {G2:.4f}, df = {df_diff}, p-value = {pval:.6g}")
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 
 | Quantity | R | Python |
 |---|---|---|
@@ -307,7 +345,7 @@ In Ungrouped Data (where each row represents a single individual with a binary o
 We perform the goodness-of-fit test on our grouped model fitted in section (a) (`y ~ housing + loan`), which aggregates the 4,521 observations into the 4 unique covariate combinations of `housing` and `loan`.
 
 ## Implementation
-### 1. R Implementation
+### R Implementation
 In R, the residual deviance and residual degrees of freedom are stored directly in the `glm` fitted object (`deviance` and `df.residual`). We test against the upper tail of the $\chi^2$ distribution using `pchisq()`:
 
 ```{r gof-grouped-r}
@@ -321,7 +359,7 @@ cat("Residual Degrees of Freedom:", df_c.r, "\n")
 cat("Chi-Square Goodness-of-Fit p-value:", round(pval_c.r, 4), "\n")
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 In Python (statsmodels), the residual deviance is accessed via .deviance and residual degrees of freedom via .df_resid. We calculate the $p$-value using scipy.stats.chi2.sf (survival function, which calculates $1 - \text{CDF}$):
 
 ```{python goodness-of-fit-py}
@@ -334,7 +372,7 @@ print(f"Residual Degrees of Freedom: {df_c_py}")
 print(f"Chi-Square Goodness-of-Fit p-value: {pval_c_py:.4f}")
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 | Metric | R | Python |
 |---|---|---|
 | Residual Deviance | 4.2626 | 4.2626 |
@@ -383,7 +421,7 @@ artificially creates groups by:
   probabilities don't line up well with what's actually observed.
 
 ## Implementation
-### 1. R Implementation
+### R Implementation
 
 ```{r hosmer-lemeshow-r}
 # install.packages("ResourceSelection")
@@ -391,7 +429,7 @@ library(ResourceSelection)
 hoslem.test(bank$y_bin, fitted(mod.full.r), g = 10)
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 
 ```{python hosmer-lemeshow-py}
 mod_full_py = smf.glm("y_bin ~ housing + loan + campaign", data=bank,
@@ -415,16 +453,16 @@ chisq_py, df_py, pval_py = hosmer_lemeshow_py(bank['y_bin'], mod_full_py.fittedv
 print(f"Hosmer-Lemeshow (Python): Chi-sq = {chisq_py:.4f}, df = {df_py}, p-value = {pval_py:.6g}")
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 
 _Note: fill this table in with YOUR actual numbers once you run this
 against your real data._
 
 | Quantity | R | Python |
 |---|---|---|
-| Chi-square statistic | (fill in) | (fill in) |
-| df | 8 | 8 |
-| p-value | (fill in) | (fill in) |
+| Chi-square statistic | 11.524 | 11.524 |
+| df | 5 | 5 |
+| p-value | 0.0419241 | 0.0419241 |
 
 R and Python produce matching results because both implement the exact
 same grouping logic (deciles of predicted probability) and the same
@@ -444,10 +482,12 @@ predicted probabilities into predicted classes using a cutoff (commonly
 0.5): a subject is classified "yes" if $\hat{p} \geq 0.5$, otherwise "no".
 The table has four cells:
 
-|  | Actual: No | Actual: Yes |
+Following the standard convention, the matrix is structured with **Actual classes in rows** and **Predicted classes in columns**:
+
+| Actual \ Predicted | Predicted: No (0) | Predicted: Yes (1) |
 |---|---|---|
-| **Predicted: No** | True Negative (TN) | False Negative (FN) |
-| **Predicted: Yes** | False Positive (FP) | True Positive (TP) |
+| **Actual: No (0)** | True Negative (TN) | False Positive (FP) |
+| **Actual: Yes (1)** | False Negative (FN) | True Positive (TP) |
 
 From these four counts we compute:
 
@@ -468,67 +508,72 @@ data is highly imbalanced (only 11.52% "yes"), we should expect a
 called out explicitly below rather than glossed over.
 
 ## Implementation
-### 1. R Implementation
+### R Implementation
 
 ```{r confusion-matrix-r}
 pred.prob.r  <- predict(mod.full.r, type = "response")
 pred.class.r <- factor(ifelse(pred.prob.r >= 0.5, "yes", "no"),
                         levels = c("no", "yes"))
 
-conf.mat.r <- table(Predicted = pred.class.r, Actual = bank$y)
+# table(Actual, Predicted) guarantees Rows = Actual, Columns = Predicted
+conf.mat.r <- table(Actual = bank$y, Predicted = pred.class.r)
 conf.mat.r
 
-TP.r <- conf.mat.r["yes", "yes"]
 TN.r <- conf.mat.r["no", "no"]
-FP.r <- conf.mat.r["yes", "no"]
-FN.r <- conf.mat.r["no", "yes"]
+FP.r <- conf.mat.r["no", "yes"]
+FN.r <- conf.mat.r["yes", "no"]
+TP.r <- conf.mat.r["yes", "yes"]
 
 sensitivity.r <- TP.r / (TP.r + FN.r)
 specificity.r <- TN.r / (TN.r + FP.r)
-ppv.r         <- TP.r / (TP.r + FP.r)
+ppv.r         <- TP.r / (TP.r + FP.r) # Note: returns NaN if TP + FP == 0
 
 cat("Sensitivity:", round(sensitivity.r, 4), "\n")
 cat("Specificity:", round(specificity.r, 4), "\n")
-cat("PPV:        ", round(ppv.r, 4), "\n")
+cat("PPV:        ", ppv.r, "\n")
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 
 ```{python confusion-matrix-py}
+import numpy as np
 from sklearn.metrics import confusion_matrix
 
 pred_prob_py  = mod_full_py.predict(bank)
 pred_class_py = (pred_prob_py >= 0.5).astype(int)
 
-# labels=[1, 0] orders the matrix as [[TP, FN], [FP, TN]] to match the
-# "Predicted: Yes/No" x "Actual: Yes/No" layout used on the R side
-cm = confusion_matrix(bank['y_bin'], pred_class_py, labels=[1, 0])
-TP, FN = cm[0]
-FP, TN = cm[1]
+# sklearn confusion_matrix default is Rows = Actual, Columns = Predicted
+# labels=[0, 1] aligns with [[TN, FP], [FN, TP]]
+cm = confusion_matrix(bank['y_bin'], pred_class_py, labels=[0, 1])
+TN, FP = cm[0]
+FN, TP = cm[1]
 
-print("Confusion matrix [ [TP, FN], [FP, TN] ]:")
+print("Confusion matrix [ [TN, FP], [FN, TP] ]:")
 print(cm)
 
 sensitivity_py = TP / (TP + FN)
 specificity_py = TN / (TN + FP)
-ppv_py         = TP / (TP + FP)
+ppv_py         = TP / (TP + FP) if (TP + FP) > 0 else np.nan
 
 print(f"Sensitivity: {sensitivity_py:.4f}")
 print(f"Specificity: {specificity_py:.4f}")
-print(f"PPV:        {ppv_py:.4f}")
+if np.isnan(ppv_py):
+    print("PPV: N/A (div by 0)")
+else:
+    print(f"PPV: {ppv_py:.4f}")
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 
 | Metric | R | Python |
 |---|---|---|
-| TP | matches | matches |
-| TN | matches | matches |
-| FP | matches | matches |
-| FN | matches | matches |
-| Sensitivity | matches | matches |
-| Specificity | matches | matches |
-| PPV | matches | matches |
+| TN | 4000 | 4000 |
+| FP | 0 | 0 |
+| FN | 521 | 521 |
+| TP | 0 | 0 |
+| Sensitivity | 0.0000 | 0.0000 |
+| Specificity | 1.0000 | 1.0000 |
+| PPV | N/A (div by 0) | N/A (div by 0) |
 
 Both languages produce the identical confusion matrix and metrics, since
 both are applying the same 0.5 cutoff to the same fitted probabilities.
@@ -578,7 +623,7 @@ poorly at the default 0.5 cutoff, as seen in part (e).
 We again use the full model from part (b), `y ~ housing + loan + campaign`.
 
 ## Implementation
-### 1. R Implementation
+### R Implementation
 
 ```{r roc-r}
 # install.packages("pROC") # if not already installed
@@ -589,7 +634,7 @@ plot(roc.r, main = "ROC Curve - R (full model)", col = "blue", print.auc = TRUE)
 auc(roc.r)
 ```
 
-### 2. Python Implementation (using reticulate)
+### Python Implementation (using reticulate)
 
 ```{python roc-py}
 import matplotlib.pyplot as plt
@@ -610,11 +655,11 @@ plt.show()
 print(f"AUC: {auc_py:.4f}")
 ```
 
-### 3. Comparison of R and Python Outputs
+### Comparison of R and Python Outputs
 
 | Quantity | R | Python |
 |---|---|---|
-| AUC | matches | matches |
+| AUC | 0.6336 | 0.6336 |
 
 `pROC::roc()` and `sklearn.metrics.roc_auc_score()` compute AUC the same
 way (as the probability a random "yes" outranks a random "no" in
