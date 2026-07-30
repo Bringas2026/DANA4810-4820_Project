@@ -218,7 +218,38 @@ In Ungrouped Data (where each row represents a single individual with a binary o
 
 
 # (d) How to perform a Hosmer-Lemeshow test in R and Python?
+
 ## Description
+
+The Residual Deviance goodness-of-fit test
+only works when data is **grouped** (multiple observations share the exact
+same predictor values, so each "row" represents $n_i > 1$ trials). Our bank
+data is **ungrouped**: each row is a single client, so $n_i = 1$ for every
+row and deviance no longer follows a chi-squared distribution.
+
+The **Hosmer-Lemeshow test** is for ungrouped
+binary data. Instead of grouping by identical covariate patterns, it
+artificially creates groups by:
+
+1. Using the fitted model to compute a predicted probability for every
+   observation.
+2. Sorting observations by that predicted probability and splitting them
+   into $g$ roughly equal-sized groups (deciles are the usual choice,
+   $g = 10$).
+3. Within each group, comparing the **observed** number of successes
+   (actual $y=1$ count) to the **expected** number of successes (sum of
+   predicted probabilities in that group).
+4. Combining these into a chi-squared-type statistic:
+   $$C = \sum_{k=1}^{g} \frac{(O_k - E_k)^2}{E_k (1 - E_k/n_k)}$$
+   which approximately follows a $\chi^2$ distribution with $g - 2$ degrees
+   of freedom under the null hypothesis that the model fits well.
+
+- Null Hypothesis ($H_0$): the model fits the data adequately.
+- Alternative Hypothesis ($H_a$): the model does not fit the data
+  adequately.
+- A large p-value ($> 0.05$) means we fail to reject $H_0$ -- no evidence
+  of lack of fit. A small p-value means the model's predicted
+  probabilities don't line up well with what's actually observed.
 
 ## Implementation
 ### 1. R Implementation
